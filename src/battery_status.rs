@@ -11,8 +11,6 @@ pub struct BatteryStatus {
 	battery: battery::Battery,
 	icon: char,
 	pct: u8,
-	last_displayed_icon: char,
-	last_displayed_pct: u8,
 }
 
 impl BatteryStatus {
@@ -36,18 +34,11 @@ impl BatteryStatus {
 	}
 
 	pub fn to_string(&mut self) -> String {
-		self.last_displayed_icon = self.icon;
-		self.last_displayed_pct = self.pct;
 		let mut output = String::new();
 		output.push(self.icon);
 		output.push_str(self.pct.to_string().as_str());
 		output.push('%');
 		return output;
-	}
-
-	pub fn changed(&self) -> bool {
-		return self.icon != self.last_displayed_icon ||
-			self.pct != self.last_displayed_pct;
 	}
 }
 
@@ -62,8 +53,6 @@ pub fn new() -> BatteryStatus {
 		battery,
 		icon: '\0',
 		pct: 0,
-		last_displayed_icon: '\0',
-		last_displayed_pct: 0,
 	};
 
 	status.update();

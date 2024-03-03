@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 mod battery_status;
 mod time_status;
 
@@ -8,15 +6,13 @@ fn main() {
 	let mut time: time_status::TimeStatus = time_status::new();
 
 	loop {
-		if battery.changed() || time.changed() {
-			println!(
-				"{}    {}  ",
-				battery.to_string(),
-				time.to_string()
-			);
-		}
+		println!(
+			"{}    {}  ",
+			battery.to_string(),
+			time.to_string()
+		);
 
-		std::thread::sleep(Duration::new(1, 0));
+		std::thread::sleep(time.seconds_alignment_delay());
 
 		battery.update();
 		time.update();

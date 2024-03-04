@@ -80,12 +80,10 @@ impl BatteryStatus {
 	pub fn to_string(&mut self) -> String {
 		let mut output = String::new();
 		output.push(BOLT);
+		output.push(' ');
 		output.push(self.bar[0]);
 		output.push(self.bar[1]);
 		output.push(self.bar[2]);
-		// output.push(' ');
-		// output.push_str(self.pct.to_string().as_str());
-		// output.push('%');
 		return output;
 	}
 }

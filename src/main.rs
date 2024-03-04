@@ -1,16 +1,19 @@
+use std::env;
+
 mod battery_status;
 mod time_status;
 
 fn main() {
 	let mut battery: battery_status::BatteryStatus = battery_status::new();
 	let mut time: time_status::TimeStatus = time_status::new();
+	let separator: String = env::var("SEPARATOR").unwrap_or(String::from("  ⋮  "));
+	let suffix: String = env::var("SUFFIX").unwrap_or(String::from("  "));
 
 	loop {
-		println!(
-			"{}    {}  ",
-			battery.to_string(),
-			time.to_string()
-		);
+		print!("{}", battery.to_string());
+		print!("{}", separator);
+		print!("{}", time.to_string());
+		println!("{}", suffix);
 
 		std::thread::sleep(time.seconds_alignment_delay());
 

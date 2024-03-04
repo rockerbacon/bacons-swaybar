@@ -1,43 +1,91 @@
 use battery;
+use battery::State;
 use battery::units::ratio::percent;
+use std::cmp;
+use std::env;
 
-const BATTERY_CHARGING: char = '\u{1f50c}';
-const BATTERY_LOW: char = '\u{1faab}';
-const BATTERY_MID: char = '\u{1f50b}';
-const BATTERY_HIG: char = '\u{1f50b}';
+const BOLT: char = '\u{26a1}';
+const SMALL_SQUARE: char = '\u{25ab}';
+const LARGE_SQUARE: char = '\u{25a0}';
+const BATTERY_ANIM: [char; 2] = [SMALL_SQUARE, LARGE_SQUARE];
 
 pub struct BatteryStatus {
 	manager: battery::Manager,
 	battery: battery::Battery,
-	icon: char,
+	bar: [char; 3],
 	pct: u8,
+	max_charge: u8,
+	clock: usize,
 }
 
 impl BatteryStatus {
-	pub fn update(&mut self) {
+	fn refresh_data_src(&mut self) {
 		self.manager.refresh(&mut self.battery).expect("Broken refresh");
+	}
+
+	fn get_pct(&self) -> u8 {
+		let raw: f32 = self.battery.state_of_charge().get::<percent>();
+		let pct: f32 = raw / (self.max_charge as f32) * 100f32;
+
+		return cmp::min(100, pct as u8);
+	}
+
+	fn charge_low(&mut self) {
+		self.bar[0] = BATTERY_ANIM[self.clock % 2];
+		self.clock += 1;
+	}
+
+	fn charge_mid(&mut self, range: usize) {
+		self.bar[range-1] = LARGE_SQUARE;
+		self.bar[range] = BATTERY_ANIM[self.clock % 2];
+		self.clock += 1;
+	}
+
+	fn charge_full(&mut self) {
+		self.bar[2] = LARGE_SQUARE;
+	}
+
+	fn discharge(&mut self, level: usize) {
+		self.bar[level] = SMALL_SQUARE;
+	}
+
+	pub fn update(&mut self) {
+		self.refresh_data_src();
 
 		let state: battery::State = self.battery.state();
-		let pct: f32 = self.battery.state_of_charge().get::<percent>();
+		self.pct = self.get_pct();
 
-		self.pct = pct as u8;
+		match (state, self.pct) {
+			(State::Charging, 90..=100) => self.charge_full(),
+			(State::Charging, 66..=89) => self.charge_mid(2),
+			(State::Charging, 33..=65) => self.charge_mid(1),
+			(State::Charging, 0..=32) => self.charge_low(),
+			(.., 66..=89) => self.discharge(2),
+			(.., 33..=65) => self.discharge(1),
+			(.., 0..=32) => self.discharge(0),
+			_ => (),
+		};
+	}
 
-		if state == battery::State::Charging {
-			self.icon = BATTERY_CHARGING;
-		} else if self.pct > 66 {
-			self.icon = BATTERY_HIG;
-		} else if self.pct > 33 {
-			self.icon = BATTERY_MID;
-		} else {
-			self.icon = BATTERY_LOW;
+	pub fn init(&mut self) {
+		self.pct = self.get_pct();
+		self.bar = match self.pct {
+			90..=100 => [LARGE_SQUARE, LARGE_SQUARE, LARGE_SQUARE],
+			66..=89 => [LARGE_SQUARE, LARGE_SQUARE, SMALL_SQUARE],
+			33..=65 => [LARGE_SQUARE, SMALL_SQUARE, SMALL_SQUARE],
+			_ => [SMALL_SQUARE, SMALL_SQUARE, SMALL_SQUARE],
 		}
 	}
 
 	pub fn to_string(&mut self) -> String {
 		let mut output = String::new();
-		output.push(self.icon);
-		output.push_str(self.pct.to_string().as_str());
-		output.push('%');
+		output.push(BOLT);
+		output.push(self.bar[0]);
+		output.push(self.bar[1]);
+		output.push(self.bar[2]);
+		// output.push(' ');
+		// output.push_str(self.pct.to_string().as_str());
+		// output.push('%');
 		return output;
 	}
 }
@@ -48,13 +96,20 @@ pub fn new() -> BatteryStatus {
 		.expect("Missing all batteries").next()
 		.expect("Missing single battery").expect("Missing nested battery");
 
+	let max_charge = match env::var("MAX_CHARGE") {
+		Ok(val) => val.parse::<u8>().expect("invalid MAX_CHARGE"),
+		Err(_) => 100,
+	};
+
 	let mut status: BatteryStatus = BatteryStatus {
 		manager,
 		battery,
-		icon: '\0',
+		bar: [SMALL_SQUARE, SMALL_SQUARE, SMALL_SQUARE],
 		pct: 0,
+		max_charge,
+		clock: 0,
 	};
 
-	status.update();
+	status.init();
 	return status;
 }

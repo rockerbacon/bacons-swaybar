@@ -4,6 +4,8 @@ use battery::units::ratio::percent;
 use std::cmp;
 use std::env;
 
+const BAT_HIG: char = '\u{1F50B}';
+const BAT_LOW: char = '\u{1FAAB}';
 const BOLT: char = '\u{26a1}';
 const SMALL_SQUARE: char = '\u{25ab}';
 const LARGE_SQUARE: char = '\u{25a0}';
@@ -79,7 +81,12 @@ impl BatteryStatus {
 
 	pub fn to_string(&mut self) -> String {
 		let mut output = String::new();
-		output.push(BOLT);
+		match (self.battery.state(), self.pct) {
+			(State::Charging, ..) => output.push(BOLT),
+			(State::Unknown, 100) => output.push(BOLT),
+			(State::Discharging, 33..=100) => output.push(BAT_HIG),
+			_ => output.push(BAT_LOW),
+		}
 		output.push(' ');
 		output.push(self.bar[0]);
 		output.push(self.bar[1]);

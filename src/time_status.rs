@@ -2,16 +2,13 @@ use chrono::prelude::{DateTime, Local, Timelike};
 use chrono::TimeDelta;
 use std::time::Duration;
 use std::fmt;
+use super::widget;
 
 pub struct TimeStatus {
 	now: DateTime<Local>,
 }
 
 impl TimeStatus {
-	pub fn update(&mut self) {
-		self.now = Local::now();
-	}
-
 	/**
 	 Calculates a delay that ensures the next time update
 	 has near perfect alignment with the start of the next second
@@ -29,6 +26,12 @@ impl fmt::Display for TimeStatus {
 		return write!(
 			f, "{}", self.now.format("%Y-%m-%d %H:%M:%S").to_string()
 		);
+	}
+}
+
+impl widget::Widget for TimeStatus {
+	fn update(&mut self) {
+		self.now = Local::now();
 	}
 }
 

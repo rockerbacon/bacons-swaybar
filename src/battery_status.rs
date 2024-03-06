@@ -5,6 +5,7 @@ use std::cmp;
 use std::env;
 use crate::icon;
 use std::fmt;
+use super::widget;
 
 const BATTERY_ANIM: [char; 2] = [icon::SQR_S, icon::SQR_L];
 
@@ -48,24 +49,6 @@ impl BatteryStatus {
 		self.bar[level] = icon::SQR_S;
 	}
 
-	pub fn update(&mut self) {
-		self.refresh_data_src();
-
-		let state: battery::State = self.battery.state();
-		self.pct = self.get_pct();
-
-		match (state, self.pct) {
-			(State::Charging, 90..=100) => self.charge_full(),
-			(State::Charging, 66..=89) => self.charge_mid(2),
-			(State::Charging, 33..=65) => self.charge_mid(1),
-			(State::Charging, 0..=32) => self.charge_low(),
-			(.., 66..=89) => self.discharge(2),
-			(.., 33..=65) => self.discharge(1),
-			(.., 0..=32) => self.discharge(0),
-			_ => (),
-		};
-	}
-
 	pub fn init(&mut self) {
 		self.pct = self.get_pct();
 		self.bar = match self.pct {
@@ -87,6 +70,26 @@ impl fmt::Display for BatteryStatus {
 		};
 
 		return write!(f, "{} {}{}{}", main_icn, self.bar[0], self.bar[1], self.bar[2]);
+	}
+}
+
+impl widget::Widget for BatteryStatus {
+	fn update(&mut self) {
+		self.refresh_data_src();
+
+		let state: battery::State = self.battery.state();
+		self.pct = self.get_pct();
+
+		match (state, self.pct) {
+			(State::Charging, 90..=100) => self.charge_full(),
+			(State::Charging, 66..=89) => self.charge_mid(2),
+			(State::Charging, 33..=65) => self.charge_mid(1),
+			(State::Charging, 0..=32) => self.charge_low(),
+			(.., 66..=89) => self.discharge(2),
+			(.., 33..=65) => self.discharge(1),
+			(.., 0..=32) => self.discharge(0),
+			_ => (),
+		};
 	}
 }
 

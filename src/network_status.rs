@@ -4,6 +4,7 @@ use std::mem;
 use std::ffi::CStr;
 use std::fmt;
 use super::icon;
+use super::widget;
 
 enum InterfaceClass { Eth, Wlan }
 
@@ -105,8 +106,8 @@ pub struct NetworkStatus {
 	conn_stat: ConnStat,
 }
 
-impl NetworkStatus {
-	pub fn update(&mut self) {
+impl widget::Widget for NetworkStatus {
+	fn update(&mut self) {
 		self.conn_stat.reset();
 
 		for i in &mut self.eth_ifaces {

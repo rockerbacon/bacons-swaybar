@@ -64,7 +64,7 @@ impl fmt::Display for BatteryStatus {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let main_icn = match (self.battery.state(), self.pct) {
 			(State::Charging, ..) => icon::BOLT,
-			(State::Unknown, 100) => icon::BOLT,
+			(State::Unknown, 95..=100) => icon::BOLT,
 			(.., 33..=100) => icon::BATT_HIG,
 			_ => icon::BATT_LOW,
 		};

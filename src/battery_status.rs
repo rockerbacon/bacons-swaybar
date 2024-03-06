@@ -4,6 +4,7 @@ use battery::units::ratio::percent;
 use std::cmp;
 use std::env;
 use crate::icon;
+use std::fmt;
 
 const BATTERY_ANIM: [char; 2] = [icon::SQR_S, icon::SQR_L];
 
@@ -74,20 +75,18 @@ impl BatteryStatus {
 			_ => [icon::SQR_S, icon::SQR_S, icon::SQR_S],
 		}
 	}
+}
 
-	pub fn to_string(&mut self) -> String {
-		let mut output = String::new();
-		match (self.battery.state(), self.pct) {
-			(State::Charging, ..) => output.push(icon::BOLT),
-			(State::Unknown, 100) => output.push(icon::BOLT),
-			(State::Discharging, 33..=100) => output.push(icon::BATT_HIG),
-			_ => output.push(icon::BATT_LOW),
-		}
-		output.push(' ');
-		output.push(self.bar[0]);
-		output.push(self.bar[1]);
-		output.push(self.bar[2]);
-		return output;
+impl fmt::Display for BatteryStatus {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let main_icn = match (self.battery.state(), self.pct) {
+			(State::Charging, ..) => icon::BOLT,
+			(State::Unknown, 100) => icon::BOLT,
+			(State::Discharging, 33..=100) => icon::BATT_HIG,
+			_ => icon::BATT_LOW,
+		};
+
+		return write!(f, "{} {}{}{}", main_icn, self.bar[0], self.bar[1], self.bar[2]);
 	}
 }
 

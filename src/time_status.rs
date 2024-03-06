@@ -1,6 +1,7 @@
 use chrono::prelude::{DateTime, Local, Timelike};
 use chrono::TimeDelta;
 use std::time::Duration;
+use std::fmt;
 
 pub struct TimeStatus {
 	now: DateTime<Local>,
@@ -9,10 +10,6 @@ pub struct TimeStatus {
 impl TimeStatus {
 	pub fn update(&mut self) {
 		self.now = Local::now();
-	}
-
-	pub fn to_string(&mut self) -> String {
-		return self.now.format("%Y-%m-%d %H:%M:%S").to_string();
 	}
 
 	/**
@@ -24,6 +21,14 @@ impl TimeStatus {
 			+ TimeDelta::seconds(1);
 
 		return (target - self.now).to_std().expect("Broken duration");
+	}
+}
+
+impl fmt::Display for TimeStatus {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		return write!(
+			f, "{}", self.now.format("%Y-%m-%d %H:%M:%S").to_string()
+		);
 	}
 }
 

@@ -13,9 +13,9 @@ fn main() {
 	let suffix: String = env::var("SUFFIX").unwrap_or(String::from("  "));
 
 	loop {
-		print!("{}{}", battery.to_string(), separator);
-		print!("{}{}", net.to_string(), separator);
-		print!("{}", time.to_string());
+		print!("{}{}", battery, separator);
+		print!("{}{}", net, separator);
+		print!("{}", time);
 		println!("{}", suffix);
 
 		std::thread::sleep(time.seconds_alignment_delay());

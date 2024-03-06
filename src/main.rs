@@ -1,6 +1,7 @@
 use std::env;
 
 mod battery_status;
+mod icon;
 mod network_status;
 mod time_status;
 

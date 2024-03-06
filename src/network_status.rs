@@ -3,10 +3,7 @@ use std::collections::HashSet;
 use std::mem;
 use std::ffi::CStr;
 use std::fmt;
-
-const ICN_LAPTOP: char = '\u{1F4BB}';
-const ICN_GLOBE: char = '\u{1F310}';
-const ICN_QUESTION: char = '\u{2753}';
+use super::icon;
 
 enum InterfaceClass { Eth, Wlan }
 
@@ -136,7 +133,7 @@ impl Drop for NetworkStatus {
 
 impl fmt::Display for NetworkStatus {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", ICN_LAPTOP)?;
+		write!(f, "{}", icon::LAPTOP)?;
 
 		if self.conn_stat.is_wired() {
 			write!(f, " - ")?;
@@ -147,9 +144,9 @@ impl fmt::Display for NetworkStatus {
 		}
 
 		if self.conn_stat.is_off() {
-			write!(f, "{}", ICN_QUESTION)?;
+			write!(f, "{}", icon::QUESTION)?;
 		} else {
-			write!(f, "{}", ICN_GLOBE)?;
+			write!(f, "{}", icon::GLOBE)?;
 		}
 
 		return Ok(());

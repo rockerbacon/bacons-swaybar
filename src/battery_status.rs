@@ -3,13 +3,9 @@ use battery::State;
 use battery::units::ratio::percent;
 use std::cmp;
 use std::env;
+use crate::icon;
 
-const BAT_HIG: char = '\u{1F50B}';
-const BAT_LOW: char = '\u{1FAAB}';
-const BOLT: char = '\u{26a1}';
-const SMALL_SQUARE: char = '\u{25ab}';
-const LARGE_SQUARE: char = '\u{25a0}';
-const BATTERY_ANIM: [char; 2] = [SMALL_SQUARE, LARGE_SQUARE];
+const BATTERY_ANIM: [char; 2] = [icon::SQR_S, icon::SQR_L];
 
 pub struct BatteryStatus {
 	manager: battery::Manager,
@@ -38,17 +34,17 @@ impl BatteryStatus {
 	}
 
 	fn charge_mid(&mut self, range: usize) {
-		self.bar[range-1] = LARGE_SQUARE;
+		self.bar[range-1] = icon::SQR_L;
 		self.bar[range] = BATTERY_ANIM[self.clock % 2];
 		self.clock += 1;
 	}
 
 	fn charge_full(&mut self) {
-		self.bar[2] = LARGE_SQUARE;
+		self.bar[2] = icon::SQR_L;
 	}
 
 	fn discharge(&mut self, level: usize) {
-		self.bar[level] = SMALL_SQUARE;
+		self.bar[level] = icon::SQR_S;
 	}
 
 	pub fn update(&mut self) {
@@ -72,20 +68,20 @@ impl BatteryStatus {
 	pub fn init(&mut self) {
 		self.pct = self.get_pct();
 		self.bar = match self.pct {
-			90..=100 => [LARGE_SQUARE, LARGE_SQUARE, LARGE_SQUARE],
-			66..=89 => [LARGE_SQUARE, LARGE_SQUARE, SMALL_SQUARE],
-			33..=65 => [LARGE_SQUARE, SMALL_SQUARE, SMALL_SQUARE],
-			_ => [SMALL_SQUARE, SMALL_SQUARE, SMALL_SQUARE],
+			90..=100 => [icon::SQR_L, icon::SQR_L, icon::SQR_L],
+			66..=89 => [icon::SQR_L, icon::SQR_L, icon::SQR_S],
+			33..=65 => [icon::SQR_L, icon::SQR_S, icon::SQR_S],
+			_ => [icon::SQR_S, icon::SQR_S, icon::SQR_S],
 		}
 	}
 
 	pub fn to_string(&mut self) -> String {
 		let mut output = String::new();
 		match (self.battery.state(), self.pct) {
-			(State::Charging, ..) => output.push(BOLT),
-			(State::Unknown, 100) => output.push(BOLT),
-			(State::Discharging, 33..=100) => output.push(BAT_HIG),
-			_ => output.push(BAT_LOW),
+			(State::Charging, ..) => output.push(icon::BOLT),
+			(State::Unknown, 100) => output.push(icon::BOLT),
+			(State::Discharging, 33..=100) => output.push(icon::BATT_HIG),
+			_ => output.push(icon::BATT_LOW),
 		}
 		output.push(' ');
 		output.push(self.bar[0]);
@@ -109,7 +105,7 @@ pub fn new() -> BatteryStatus {
 	let mut status: BatteryStatus = BatteryStatus {
 		manager,
 		battery,
-		bar: [SMALL_SQUARE, SMALL_SQUARE, SMALL_SQUARE],
+		bar: [icon::SQR_S, icon::SQR_S, icon::SQR_S],
 		pct: 0,
 		max_charge,
 		clock: 0,

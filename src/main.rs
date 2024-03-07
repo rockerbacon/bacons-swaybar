@@ -3,7 +3,7 @@ use std::env;
 mod battery;
 mod clock;
 mod icon;
-mod network_status;
+mod network;
 mod widget;
 
 use widget::Widget;
@@ -13,7 +13,7 @@ use std::cell::RefCell;
 fn main() {
 	let clock_wid = RefCell::new(clock::Clock::new());
 	let battery_wid = RefCell::new(battery::Battery::new());
-	let network_wid = RefCell::new(network_status::new());
+	let network_wid = RefCell::new(network::Network::new());
 
 	let widgets: Vec<&RefCell<dyn Widget>> = vec![
 		&battery_wid,

@@ -1,8 +1,10 @@
-use chrono::prelude::{DateTime, Local, Timelike};
 use chrono::TimeDelta;
-use std::time::Duration;
+use chrono::prelude::{DateTime, Local, Timelike};
+
 use std::fmt;
-use super::widget;
+use std::time::Duration;
+
+use crate::widget;
 
 pub struct Clock {
 	now: DateTime<Local>,

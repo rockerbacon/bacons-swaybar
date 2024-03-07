@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use std::mem;
+use std::collections::HashSet;
 use std::ffi::CStr;
 
 #[derive(Clone, Copy)]

@@ -1,9 +1,10 @@
 use libc;
+
 use std::fmt;
 
-use crate::network::interface;
 use crate::icon;
 use crate::widget;
+use crate::network::interface;
 
 struct ConnStat {
 	bitmap: u8,

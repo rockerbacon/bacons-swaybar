@@ -1,11 +1,13 @@
 use ::battery;
 use ::battery::State;
 use ::battery::units::ratio::percent;
+
 use std::cmp;
 use std::env;
-use crate::icon;
 use std::fmt;
-use super::widget;
+
+use crate::icon;
+use crate::widget;
 
 const BATTERY_ANIM: [char; 2] = [icon::SQR_S, icon::SQR_L];
 

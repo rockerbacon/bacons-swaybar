@@ -1,6 +1,6 @@
-use battery;
-use battery::State;
-use battery::units::ratio::percent;
+use ::battery;
+use ::battery::State;
+use ::battery::units::ratio::percent;
 use std::cmp;
 use std::env;
 use crate::icon;
@@ -9,7 +9,7 @@ use super::widget;
 
 const BATTERY_ANIM: [char; 2] = [icon::SQR_S, icon::SQR_L];
 
-pub struct BatteryStatus {
+pub struct Battery {
 	manager: battery::Manager,
 	battery: battery::Battery,
 	bar: [char; 3],
@@ -18,14 +18,14 @@ pub struct BatteryStatus {
 	clock: usize,
 }
 
-impl BatteryStatus {
+impl Battery {
 	fn refresh_data_src(&mut self) {
 		self.manager.refresh(&mut self.battery).expect("Broken refresh");
 	}
 
-	fn get_pct(&self) -> u8 {
-		let raw: f32 = self.battery.state_of_charge().get::<percent>();
-		let pct: f32 = raw / (self.max_charge as f32) * 100f32;
+	fn get_pct(battery: &battery::Battery, max_charge: u8) -> u8 {
+		let raw: f32 = battery.state_of_charge().get::<percent>();
+		let pct: f32 = raw / (max_charge as f32) * 100f32;
 
 		return cmp::min(100, pct as u8);
 	}
@@ -49,18 +49,37 @@ impl BatteryStatus {
 		self.bar[level] = icon::SQR_S;
 	}
 
-	pub fn init(&mut self) {
-		self.pct = self.get_pct();
-		self.bar = match self.pct {
+	pub fn new() -> Battery {
+		let manager: battery::Manager = battery::Manager::new().expect("Expected battery manager");
+		let battery: battery::Battery = manager.batteries()
+			.expect("Missing all batteries").next()
+			.expect("Missing single battery").expect("Missing nested battery");
+
+		let max_charge = match env::var("MAX_CHARGE") {
+			Ok(val) => val.parse::<u8>().expect("invalid MAX_CHARGE"),
+			Err(_) => 100,
+		};
+
+		let pct = Battery::get_pct(&battery, max_charge);
+		let bar = match pct {
 			90..=100 => [icon::SQR_L, icon::SQR_L, icon::SQR_L],
 			66..=89 => [icon::SQR_L, icon::SQR_L, icon::SQR_S],
 			33..=65 => [icon::SQR_L, icon::SQR_S, icon::SQR_S],
 			_ => [icon::SQR_S, icon::SQR_S, icon::SQR_S],
-		}
+		};
+
+		return Battery{
+			manager,
+			battery,
+			bar,
+			pct,
+			max_charge,
+			clock: 0,
+		};
 	}
 }
 
-impl fmt::Display for BatteryStatus {
+impl fmt::Display for Battery {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let main_icn = match (self.battery.state(), self.pct) {
 			(State::Charging, ..) => icon::BOLT,
@@ -73,12 +92,12 @@ impl fmt::Display for BatteryStatus {
 	}
 }
 
-impl widget::Widget for BatteryStatus {
+impl widget::Widget for Battery {
 	fn update(&mut self) {
 		self.refresh_data_src();
 
 		let state: battery::State = self.battery.state();
-		self.pct = self.get_pct();
+		self.pct = Battery::get_pct(&self.battery, self.max_charge);
 
 		match (state, self.pct) {
 			(State::Charging, 90..=100) => self.charge_full(),
@@ -91,28 +110,4 @@ impl widget::Widget for BatteryStatus {
 			_ => (),
 		};
 	}
-}
-
-pub fn new() -> BatteryStatus {
-	let manager: battery::Manager = battery::Manager::new().expect("Expected battery manager");
-	let battery: battery::Battery = manager.batteries()
-		.expect("Missing all batteries").next()
-		.expect("Missing single battery").expect("Missing nested battery");
-
-	let max_charge = match env::var("MAX_CHARGE") {
-		Ok(val) => val.parse::<u8>().expect("invalid MAX_CHARGE"),
-		Err(_) => 100,
-	};
-
-	let mut status: BatteryStatus = BatteryStatus {
-		manager,
-		battery,
-		bar: [icon::SQR_S, icon::SQR_S, icon::SQR_S],
-		pct: 0,
-		max_charge,
-		clock: 0,
-	};
-
-	status.init();
-	return status;
 }

@@ -1,6 +1,6 @@
 use std::env;
 
-mod battery_status;
+mod battery;
 mod icon;
 mod network_status;
 mod time_status;
@@ -11,14 +11,14 @@ use widget::Widget;
 use std::cell::RefCell;
 
 fn main() {
-	let time = RefCell::new(time_status::new());
-	let battery = RefCell::new(battery_status::new());
-	let network = RefCell::new(network_status::new());
+	let time_wid = RefCell::new(time_status::new());
+	let battery_wid = RefCell::new(battery::Battery::new());
+	let network_wid = RefCell::new(network_status::new());
 
 	let widgets: Vec<&RefCell<dyn Widget>> = vec![
-		&battery,
-		&network,
-		&time,
+		&battery_wid,
+		&network_wid,
+		&time_wid,
 	];
 
 	let separator: String = env::var("SEPARATOR").unwrap_or(String::from("  ⋮  "));
@@ -31,7 +31,7 @@ fn main() {
 		print!("{}", widgets[widgets.len()-1].borrow());
 		println!("{}", suffix);
 
-		std::thread::sleep(time.borrow_mut().seconds_alignment_delay());
+		std::thread::sleep(time_wid.borrow_mut().seconds_alignment_delay());
 
 		for wid in widgets.iter() {
 			wid.borrow_mut().update();

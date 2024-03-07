@@ -4,11 +4,11 @@ use std::time::Duration;
 use std::fmt;
 use super::widget;
 
-pub struct TimeStatus {
+pub struct Clock {
 	now: DateTime<Local>,
 }
 
-impl TimeStatus {
+impl Clock {
 	/**
 	 Calculates a delay that ensures the next time update
 	 has near perfect alignment with the start of the next second
@@ -19,9 +19,15 @@ impl TimeStatus {
 
 		return (target - self.now).to_std().expect("Broken duration");
 	}
+
+	pub fn new() -> Clock {
+		return Clock{
+			now: Local::now(),
+		}
+	}
 }
 
-impl fmt::Display for TimeStatus {
+impl fmt::Display for Clock {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		return write!(
 			f, "{}", self.now.format("%Y-%m-%d %H:%M:%S").to_string()
@@ -29,14 +35,8 @@ impl fmt::Display for TimeStatus {
 	}
 }
 
-impl widget::Widget for TimeStatus {
+impl widget::Widget for Clock {
 	fn update(&mut self) {
 		self.now = Local::now();
 	}
-}
-
-pub fn new() -> TimeStatus {
-	return TimeStatus {
-		now: Local::now(),
-	};
 }

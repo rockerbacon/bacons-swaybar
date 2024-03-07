@@ -6,8 +6,8 @@ use std::cmp;
 use std::env;
 use std::fmt;
 
-use crate::icon;
-use crate::widget;
+use crate::common::icon;
+use crate::common::Widget;
 
 const BATTERY_ANIM: [char; 2] = [icon::SQR_S, icon::SQR_L];
 
@@ -94,7 +94,7 @@ impl fmt::Display for Battery {
 	}
 }
 
-impl widget::Widget for Battery {
+impl Widget for Battery {
 	fn update(&mut self) {
 		self.refresh_data_src();
 

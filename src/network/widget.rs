@@ -2,8 +2,8 @@ use libc;
 
 use std::fmt;
 
-use crate::icon;
-use crate::widget;
+use crate::common::icon;
+use crate::common::Widget;
 use crate::network::interface;
 
 struct ConnStat {
@@ -86,7 +86,7 @@ impl Network {
 	}
 }
 
-impl widget::Widget for Network {
+impl Widget for Network {
 	fn update(&mut self) {
 		self.conn_stat.reset();
 

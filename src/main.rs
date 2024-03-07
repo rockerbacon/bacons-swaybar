@@ -1,13 +1,13 @@
+mod common;
+
 mod battery;
 mod clock;
-mod icon;
 mod network;
-mod widget;
 
 use std::env;
 use std::cell::RefCell;
 
-use crate::widget::Widget;
+use crate::common::Widget;
 
 fn main() {
 	let clock_wid = RefCell::new(clock::Clock::new());

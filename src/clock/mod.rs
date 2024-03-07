@@ -4,7 +4,7 @@ use chrono::prelude::{DateTime, Local, Timelike};
 use std::fmt;
 use std::time::Duration;
 
-use crate::widget;
+use crate::common::Widget;
 
 pub struct Clock {
 	now: DateTime<Local>,
@@ -37,7 +37,7 @@ impl fmt::Display for Clock {
 	}
 }
 
-impl widget::Widget for Clock {
+impl Widget for Clock {
 	fn update(&mut self) {
 		self.now = Local::now();
 	}

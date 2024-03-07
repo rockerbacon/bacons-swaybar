@@ -8,17 +8,17 @@ mod widget;
 
 use widget::Widget;
 
+use std::cell::RefCell;
+
 fn main() {
-	let mut time = time_status::new();
-	let mut battery = battery_status::new();
-	let mut network = network_status::new();
+	let time = RefCell::new(time_status::new());
+	let battery = RefCell::new(battery_status::new());
+	let network = RefCell::new(network_status::new());
 
-	let time_ptr = &mut time as *mut time_status::TimeStatus;
-
-	let mut widgets: Vec<&mut dyn Widget> = vec![
-		&mut battery,
-		&mut network,
-		&mut time,
+	let widgets: Vec<&RefCell<dyn Widget>> = vec![
+		&battery,
+		&network,
+		&time,
 	];
 
 	let separator: String = env::var("SEPARATOR").unwrap_or(String::from("  ⋮  "));
@@ -26,17 +26,15 @@ fn main() {
 
 	loop {
 		for wid in widgets[..widgets.len()-1].iter() {
-			print!("{}{}", wid, separator);
+			print!("{}{}", wid.borrow(), separator);
 		}
-		print!("{}", widgets[widgets.len()-1]);
+		print!("{}", widgets[widgets.len()-1].borrow());
 		println!("{}", suffix);
 
-		std::thread::sleep(unsafe {
-			(*time_ptr).seconds_alignment_delay()
-		});
+		std::thread::sleep(time.borrow_mut().seconds_alignment_delay());
 
-		for wid in widgets.iter_mut() {
-			wid.update();
+		for wid in widgets.iter() {
+			wid.borrow_mut().update();
 		}
 	}
 }

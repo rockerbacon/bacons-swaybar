@@ -87,7 +87,7 @@ impl Network {
 }
 
 impl Widget for Network {
-	fn update(&mut self) {
+	fn update(&mut self) -> bool {
 		self.conn_stat.reset();
 
 		for i in &mut self.eth_ifaces {
@@ -103,6 +103,8 @@ impl Widget for Network {
 				self.conn_stat.set_wireless();
 			}
 		}
+
+		return false;
 	}
 }
 

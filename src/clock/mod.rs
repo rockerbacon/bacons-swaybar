@@ -38,7 +38,8 @@ impl fmt::Display for Clock {
 }
 
 impl Widget for Clock {
-	fn update(&mut self) {
+	fn update(&mut self) -> bool {
 		self.now = Local::now();
+		return false;
 	}
 }

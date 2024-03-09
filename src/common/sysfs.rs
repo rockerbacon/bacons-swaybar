@@ -100,14 +100,14 @@ pub struct Sysfs {
 }
 
 impl Sysfs {
-	fn update_attr(attr: &mut Attr) -> bool {
+	fn update_attr(attr: &mut Attr, force_flip: bool) -> bool {
 		let mut file = attr.file.borrow_mut();
 		file.seek(SeekFrom::Start(0)).expect("Failed to reset file");
 
 		let bytes_read = file.read(&mut attr.val.bbuf)
 			.expect("Could not read device attribute");
 
-		if attr.val.changed() {
+		if force_flip || attr.val.changed() {
 			attr.val.flip_bufs(bytes_read);
 			return true;
 		} else {
@@ -131,7 +131,7 @@ impl Sysfs {
 				end: 0,
 			}
 		};
-		Sysfs::update_attr(&mut attr);
+		Sysfs::update_attr(&mut attr, true);
 
 		device.attrs.insert(
 			String::from(attr_name),
@@ -200,11 +200,7 @@ impl Sysfs {
 
 							match device.attrs.get_mut(attr_name) {
 								Some(attr) => {
-									let u = Sysfs::update_attr(attr);
-									if u {
-										println!("{:#?}, {}", e, attr.val);
-									}
-									has_updates = u || has_updates;
+									has_updates = Sysfs::update_attr(attr, has_updates);
 								},
 								None => (),
 							}

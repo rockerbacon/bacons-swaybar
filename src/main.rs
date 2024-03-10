@@ -23,21 +23,20 @@ fn main() {
 	let separator: String = env::var("SEPARATOR").unwrap_or(String::from("  ⋮  "));
 	let suffix: String = env::var("SUFFIX").unwrap_or(String::from("  "));
 
-	let mut update = true;
 	loop {
+		std::thread::sleep(clock_wid.borrow_mut().alignment_delay());
+
+		let mut update = false;
+		for wid in widgets.iter() {
+			update = wid.borrow_mut().update() || update;
+		}
+
 		if update {
 			for wid in widgets[..widgets.len()-1].iter() {
 				print!("{}{}", wid.borrow(), separator);
 			}
 			print!("{}", widgets[widgets.len()-1].borrow());
 			println!("{}", suffix);
-		}
-
-		std::thread::sleep(clock_wid.borrow_mut().seconds_alignment_delay());
-
-		update = false;
-		for wid in widgets.iter() {
-			update = wid.borrow_mut().update() || update;
 		}
 	}
 }

@@ -4,7 +4,7 @@ use std::fmt;
 
 use crate::common::icon;
 use crate::common::Widget;
-use crate::network::interface;
+use crate::network::{interface, netlink};
 
 struct ConnStat {
 	bitmap: u8,
@@ -42,6 +42,7 @@ impl ConnStat {
 
 pub struct Network {
 	sock: i32,
+	nlink: netlink::Socket,
 	eth_ifaces: Vec<interface::Interface>,
 	wlan_ifaces: Vec<interface::Interface>,
 	conn_stat: ConnStat,
@@ -79,6 +80,7 @@ impl Network {
 
 		return Network{
 			sock,
+			nlink: netlink::Socket::new(),
 			eth_ifaces,
 			wlan_ifaces,
 			conn_stat,
@@ -88,6 +90,10 @@ impl Network {
 
 impl Widget for Network {
 	fn update(&mut self) -> bool {
+		for msg in &self.nlink.recvmsg() {
+			println!("New netlink msg: {:#?}", msg);
+		}
+
 		self.conn_stat.reset();
 
 		for i in &mut self.eth_ifaces {

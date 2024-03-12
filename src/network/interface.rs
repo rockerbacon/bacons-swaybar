@@ -8,7 +8,6 @@ pub enum Class { Eth, Wlan }
 pub struct Interface {
 	index: u32,
 	ipv4: u32,
-	buffer: libc::ifreq,
 	class: Class,
 }
 
@@ -56,8 +55,10 @@ impl Interface {
 		unsafe { return buf.assume_init() };
 	}
 
-	unsafe fn query_class(buffer: &mut libc::ifreq, sock: i32) -> Class {
-		if libc::ioctl(sock, libc::SIOCGIWNAME, buffer as *mut libc::ifreq) == 0 {
+	fn query_class(buffer: &mut libc::ifreq, sock: i32) -> Class {
+		if unsafe {
+			libc::ioctl(sock, libc::SIOCGIWNAME, buffer as *mut libc::ifreq)
+		} == 0 {
 			return Class::Wlan;
 		} else {
 			return Class::Eth;
@@ -94,10 +95,9 @@ impl Interface {
 		let mut buffer = Interface::new_buffer(&name);
 
 		return Interface {
-			index: unsafe { Interface::query_index(&mut buffer, sock) },
-			ipv4: unsafe { Interface::query_ipv4(&mut buffer, sock) },
-			class: unsafe { Interface::query_class(&mut buffer, sock) },
-			buffer,
+			index: Interface::query_index(&mut buffer, sock),
+			ipv4: Interface::query_ipv4(&mut buffer, sock),
+			class: Interface::query_class(&mut buffer, sock),
 		};
 	}
 }

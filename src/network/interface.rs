@@ -6,18 +6,35 @@ use std::ffi::CStr;
 pub enum Class { Eth, Wlan }
 
 pub struct Interface {
+	index: u32,
+	ipv4: u32,
 	buffer: libc::ifreq,
 	class: Class,
-	running: bool,
 }
 
 impl Interface {
+	pub fn get_index(&self) -> u32 {
+		return self.index;
+	}
+
 	pub fn get_class(&self) -> Class {
 		return self.class;
 	}
 
+	pub fn set_ipv4(&mut self, ipv4: u32) {
+		self.ipv4 = ipv4;
+	}
+
+	pub fn rm_ipv4(&mut self) {
+		self.set_ipv4(0);
+	}
+
+	pub fn get_ipv4(&self) -> u32 {
+		return self.ipv4;
+	}
+
 	pub fn is_running(&self) -> bool {
-		return self.running;
+		return self.ipv4 != 0;
 	}
 
 	fn new_buffer(device: &String) -> libc::ifreq {
@@ -47,8 +64,26 @@ impl Interface {
 		}
 	}
 
-	unsafe fn query_is_running(buffer: &mut libc::ifreq, sock: i32) -> bool {
-		return libc::ioctl(sock, libc::SIOCGIFADDR, buffer as *mut libc::ifreq) == 0;
+	fn query_ipv4(buffer: &mut libc::ifreq, sock: i32) -> u32 {
+		if unsafe {
+			libc::ioctl(sock, libc::SIOCGIFADDR, buffer as *mut libc::ifreq)
+		} != 0 {
+			// interface doesn't have an ipv4
+			return 0;
+		}
+
+		let addr: &libc::sockaddr_in = unsafe { mem::transmute(&buffer.ifr_ifru.ifru_addr) };
+		return addr.sin_addr.s_addr;
+	}
+
+	fn query_index(buffer: &mut libc::ifreq, sock: i32) -> u32 {
+		if unsafe {
+			libc::ioctl(sock, libc::SIOCGIFINDEX, buffer as *mut libc::ifreq)
+		} != 0 {
+			panic!("Failure querying device index");
+		}
+
+		return unsafe { buffer.ifr_ifru.ifru_ifindex as u32 };
 	}
 
 	pub fn can_display(flags: i32) -> bool {
@@ -59,14 +94,11 @@ impl Interface {
 		let mut buffer = Interface::new_buffer(&name);
 
 		return Interface {
-			buffer,
+			index: unsafe { Interface::query_index(&mut buffer, sock) },
+			ipv4: unsafe { Interface::query_ipv4(&mut buffer, sock) },
 			class: unsafe { Interface::query_class(&mut buffer, sock) },
-			running: unsafe { Interface::query_is_running(&mut buffer, sock) },
+			buffer,
 		};
-	}
-
-	pub fn update(&mut self, sock: i32) {
-		self.running = unsafe { Interface::query_is_running(&mut self.buffer, sock) };
 	}
 }
 
@@ -94,7 +126,10 @@ pub fn list(sock: i32) -> Vec<Interface> {
 
 			if !known_ifaces.contains(&name) {
 				known_ifaces.insert(name.clone());
-				ifaces.push(Interface::new(name, sock));
+				ifaces.push(Interface::new(
+					name,
+					sock
+				));
 			}
 		}
 

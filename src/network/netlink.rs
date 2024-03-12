@@ -88,15 +88,16 @@ fn RTA_DATA (attr: *const RtAttr) -> *const libc::c_void {
 }
 
 #[derive(Debug)]
-enum Change {
+pub enum Change {
 	IpAdd, IpRmv,
 }
 
 #[derive(Debug)]
 pub struct Msg {
-	devidx: u32,
-	change: Change,
-	ips: Vec<u32>,
+	pub devidx: u32,
+	pub change: Change,
+	// TODO lets consider only one ipv4 per interface
+	pub ips: Vec<u32>,
 }
 
 fn readipv4s (addr: *const IfAddrMsg) -> Vec<u32> { unsafe {

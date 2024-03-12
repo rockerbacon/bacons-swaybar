@@ -6,6 +6,7 @@ use crate::common::icon;
 use crate::common::Widget;
 use crate::network::{interface, netlink};
 
+#[derive(Clone,Copy)]
 struct ConnStat {
 	bitmap: u8,
 }
@@ -40,77 +41,96 @@ impl ConnStat {
 	}
 }
 
+impl PartialEq for ConnStat {
+	fn eq(&self, other: &Self) -> bool {
+		return self.bitmap == other.bitmap;
+	}
+}
+impl Eq for ConnStat {}
+
 pub struct Network {
 	sock: i32,
 	nlink: netlink::Socket,
-	eth_ifaces: Vec<interface::Interface>,
-	wlan_ifaces: Vec<interface::Interface>,
+	ifaces: Vec<interface::Interface>,
 	conn_stat: ConnStat,
 }
 
 impl Network {
+	fn update_conn_stat(&mut self) -> bool {
+		let prev_conn_stat = self.conn_stat;
+
+		self.conn_stat.reset();
+		for iface in &self.ifaces {
+			match iface.get_class() {
+				interface::Class::Eth => {
+					if iface.is_running() {
+						self.conn_stat.set_wired();
+					}
+				},
+				interface::Class::Wlan => {
+					if iface.is_running() {
+						self.conn_stat.set_wireless();
+					}
+				}
+			}
+		}
+
+		return prev_conn_stat != self.conn_stat;
+	}
+
 	pub fn new() -> Network {
 		let sock: i32 = unsafe { libc::socket(libc::AF_INET, libc::SOCK_STREAM, 0) };
 		if sock <= 0 {
 			panic!("Could not open socket");
 		}
 
-		let mut ifaces = interface::list(sock);
-		let mut eth_ifaces: Vec<interface::Interface> = Vec::new();
-		let mut wlan_ifaces: Vec<interface::Interface> = Vec::new();
-		let mut conn_stat: ConnStat = ConnStat::new();
-
-		for i in (0..ifaces.len()).rev() {
-			let iface = &ifaces[i];
-			match iface.get_class() {
-				interface::Class::Eth => {
-					if iface.is_running() {
-						conn_stat.set_wired();
-					}
-					eth_ifaces.push(ifaces.swap_remove(i));
-				},
-				interface::Class::Wlan => {
-					if iface.is_running() {
-						conn_stat.set_wireless();
-					}
-					wlan_ifaces.push(ifaces.swap_remove(i));
-				}
-			}
-		}
-
-		return Network{
+		let mut net = Network {
 			sock,
 			nlink: netlink::Socket::new(),
-			eth_ifaces,
-			wlan_ifaces,
-			conn_stat,
+			ifaces: interface::list(sock),
+			conn_stat: ConnStat::new(),
 		};
+		net.update_conn_stat();
+
+		return net;
 	}
 }
 
 impl Widget for Network {
 	fn update(&mut self) -> bool {
-		for msg in &self.nlink.recvmsg() {
-			println!("New netlink msg: {:#?}", msg);
+		let msgs = self.nlink.recvmsg();
+
+		if msgs.len() == 0 {
+			return false;
 		}
 
-		self.conn_stat.reset();
+		for msg in &msgs {
+			let mut i = 0;
+			while i < self.ifaces.len() &&
+				self.ifaces[i].get_index() != msg.devidx
+			{
+				i += 1;
+			}
 
-		for i in &mut self.eth_ifaces {
-			i.update(self.sock);
-			if i.is_running() {
-				self.conn_stat.set_wired();
+			if i == self.ifaces.len() {
+				// changed device is of no interest
+				continue;
+			}
+
+			match msg.change {
+				netlink::Change::IpAdd => {
+					self.ifaces[i].set_ipv4(msg.ips[0]);
+				},
+				netlink::Change::IpRmv => {
+					if self.ifaces[i].get_ipv4() != msg.ips[0] {
+						panic!("IPv4 desync");
+					}
+					self.ifaces[i].rm_ipv4();
+				},
 			}
 		}
 
-		for i in &mut self.wlan_ifaces {
-			i.update(self.sock);
-			if i.is_running() {
-				self.conn_stat.set_wireless();
-			}
-		}
-
-		return false;
+		return self.update_conn_stat();
 	}
 }
 

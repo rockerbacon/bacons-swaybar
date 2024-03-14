@@ -50,7 +50,7 @@ impl Eq for ConnStat {}
 
 pub struct Network {
 	sock: i32,
-	nlink: netlink::Socket,
+	nlsock: netlink::NlSock,
 	ifaces: Vec<interface::Interface>,
 	conn_stat: ConnStat,
 }
@@ -86,7 +86,7 @@ impl Network {
 
 		let mut net = Network {
 			sock,
-			nlink: netlink::Socket::new(),
+			nlsock: netlink::NlSock::new(),
 			ifaces: interface::list(sock),
 			conn_stat: ConnStat::new(),
 		};
@@ -98,7 +98,7 @@ impl Network {
 
 impl Widget for Network {
 	fn update(&mut self) -> bool {
-		let msgs = self.nlink.recvmsg();
+		let msgs = self.nlsock.recvmsg();
 
 		if msgs.len() == 0 {
 			return false;
@@ -117,16 +117,17 @@ impl Widget for Network {
 				continue;
 			}
 
-			match msg.change {
-				netlink::Change::IpAdd => {
-					self.ifaces[i].set_ipv4(msg.ips[0]);
+			match msg.modop {
+				netlink::IPADD => {
+					self.ifaces[i].set_ipv4(msg.ipv4);
 				},
-				netlink::Change::IpRmv => {
-					if self.ifaces[i].get_ipv4() != msg.ips[0] {
+				netlink::IPRMV => {
+					if self.ifaces[i].get_ipv4() != msg.ipv4 {
 						panic!("IPv4 desync");
 					}
 					self.ifaces[i].rm_ipv4();
 				},
+				_ => panic!("Invalid modop {}", msg.modop),
 			}
 		}
 

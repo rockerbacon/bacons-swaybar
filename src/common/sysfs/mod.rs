@@ -1,15 +1,15 @@
-use inotify;
-
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
-use std::io::{Read, Seek, SeekFrom, ErrorKind};
+use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 use std::path::PathBuf;
 use std::str;
 use std::str::FromStr;
+
+mod inotify;
 
 const BUFSIZE: usize = 64;
 
@@ -94,8 +94,8 @@ struct Device {
 
 pub struct Sysfs {
 	root: PathBuf,
-	watches: HashMap<String, inotify::WatchDescriptor>,
-	devices: HashMap<inotify::WatchDescriptor, Device>,
+	watches: HashMap<String, i32>,
+	devices: HashMap<i32, Device>,
 	watcher: inotify::Inotify,
 }
 
@@ -143,9 +143,7 @@ impl Sysfs {
 		let mut path = self.root.clone();
 		path.push(name);
 
-		let wd = self.watcher.watches()
-			.add(&path, inotify::WatchMask::ACCESS)
-			.expect("Failed to add watch for device");
+		let wd = self.watcher.add_access_watch(&path);
 
 		let mut device = Device{
 			path,
@@ -155,7 +153,7 @@ impl Sysfs {
 
 		self.watches.insert(
 			String::from(name),
-			wd.clone(),
+			wd,
 		);
 		self.devices.insert(wd, device);
 	}
@@ -186,40 +184,27 @@ impl Sysfs {
 	/// Updates all watched device attributes
 	/// Returns true if any updated occured and false otherwise
 	pub fn update(&mut self) -> bool {
-		let mut buffer = [0u8; 1024];
+		let msgs = self.watcher.recvmsg();
 
-		let mut has_updates = false;
-		match self.watcher.read_events(&mut buffer) {
-			Ok(events) => {
-				for e in events {
-					match self.devices.get_mut(&e.wd) {
-						Some(device) => {
-							let attr_name: &str = e.name
-								.unwrap_or_default().to_str()
-								.expect("Broken inotify event name");
-
-							match device.attrs.get_mut(attr_name) {
-								Some(attr) => {
-									has_updates = Sysfs::update_attr(attr, has_updates);
-								},
-								None => (),
-							}
+		let mut has_updates: bool = false;
+		for msg in msgs {
+			match self.devices.get_mut(&msg.wd) {
+				Some(device) => {
+					match device.attrs.get_mut(msg.get_name()) {
+						Some(attr) => {
+							has_updates =
+								Sysfs::update_attr(attr, has_updates);
 						},
 						None => (),
 					}
-				}
-			},
-			Err(err) => {
-				if err.kind() != ErrorKind::WouldBlock {
-					panic!("Failure while reading inotify events");
-				}
+				},
+				None => (),
 			}
 		}
 
 		if has_updates {
 			// purge events created by Sysfs::update_attr()
-			self.watcher.read_events(&mut buffer)
-				.expect("Broken event purge");
+			self.watcher.discmsg();
 		}
 
 		return has_updates;
@@ -233,7 +218,7 @@ impl Sysfs {
 			root,
 			watches: HashMap::new(),
 			devices: HashMap::new(),
-			watcher: inotify::Inotify::init().expect("Failed to init inotify"),
+			watcher: inotify::Inotify::new(),
 		};
 	}
 

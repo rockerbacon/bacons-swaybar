@@ -1,89 +1,64 @@
-use chrono::TimeDelta;
-use chrono::prelude::{DateTime, Local, Timelike};
-
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::env;
 use std::fmt;
-use std::time::Duration;
+use std::rc::Rc;
 
 use crate::common::Widget;
+use crate::common::Time;
 
-const FORMAT_SECONDS: &str = "%Y-%m-%d %H:%M:%S";
-const FORMAT_MINUTES: &str = "%Y-%m-%d %H:%M";
-
-trait Alignment {
-	fn next_update(&self, time: &DateTime<Local>) -> DateTime<Local>;
+#[derive(PartialEq)]
+enum Precision {
+	Minutes, Seconds
 }
-
-struct SecondsAlign {}
-impl Alignment for SecondsAlign {
-	fn next_update(&self, time: &DateTime<Local>) -> DateTime<Local> {
-		return time.with_nanosecond(0).unwrap()
-			+ TimeDelta::milliseconds(999);
-	}
-}
-const SEC_ALIGN: &dyn Alignment = &SecondsAlign{};
-
-struct MinutesAlign {}
-impl Alignment for MinutesAlign {
-	fn next_update(&self, time: &DateTime<Local>) -> DateTime<Local> {
-		return time.with_second(0).unwrap().with_nanosecond(0).unwrap()
-			+ TimeDelta::milliseconds(59999);
-	}
-}
-const MIN_ALIGN: &dyn Alignment = &MinutesAlign{};
 
 pub struct Clock {
-	fmt: &'static str,
-	time: DateTime<Local>,
-	next_update: Cell<DateTime<Local>>,
-	align: &'static dyn Alignment,
+	prec: Precision,
+	time: Rc<RefCell<Time>>,
+	next_update: Cell<i64>,
 }
 
 impl Clock {
-	/// Calculates a delay that ensures the next time update
-	/// has near perfect alignment with the start of the next second
-	pub fn alignment_delay(&self) -> Duration {
-		let target = self.time.with_nanosecond(0).unwrap()
-			+ TimeDelta::seconds(1);
-
-		return (target - self.time).to_std().expect("Broken time delta");
-	}
-
-	pub fn new() -> Clock {
+	pub fn new(time: Rc<RefCell<Time>>) -> Clock {
 		let precision = env::var("CLOCK_PRECISION")
 			.unwrap_or(String::from("minutes"));
 
-		let (fmt, align) = match precision.as_str() {
-			"seconds" => (
-				FORMAT_SECONDS,
-				SEC_ALIGN,
-			),
-			"minutes" => (
-				FORMAT_MINUTES,
-				MIN_ALIGN,
-			),
+		let prec = match precision.as_str() {
+			"minutes" => Precision::Minutes,
+			"seconds" => Precision::Seconds,
 			_ => panic!("Invalid CLOCK_PRECISION"),
 		};
 
-		let now = Local::now();
-		return Clock{
-			fmt,
-			time: now,
-			next_update: Cell::new(now),
-			align,
+		let next_update = Cell::new(time.borrow().timestamp());
+		return Clock {
+			prec,
+			time,
+			next_update,
 		}
 	}
 }
 
 impl fmt::Display for Clock {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let t = self.time.borrow();
 		write!(
-			f, "{}", self.time.format(self.fmt).to_string()
+			f,
+			"{}-{:02}-{:02} {:02}:{:02}",
+			t.year(),
+			t.mon(),
+			t.day(),
+			t.hour(),
+			t.min(),
 		)?;
 
+		if self.prec == Precision::Seconds {
+			write!(f, ":{:02}", t.sec())?;
+		}
+
 		self.next_update.set(
-			self.align.next_update(&self.time)
+			t.timestamp() + match self.prec {
+				Precision::Minutes => 59i64 - t.sec() as i64,
+				Precision::Seconds => 1i64,
+			}
 		);
 
 		return Ok(());
@@ -92,7 +67,6 @@ impl fmt::Display for Clock {
 
 impl Widget for Clock {
 	fn update(&mut self) -> bool {
-		self.time = Local::now();
-		return self.time >= self.next_update.get();
+		return self.time.borrow().timestamp() >= self.next_update.get();
 	}
 }

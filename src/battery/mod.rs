@@ -71,8 +71,8 @@ impl Battery {
 
 		bat.bar = match bat.pct {
 			90..=100 => [icon::SQR_L, icon::SQR_L, icon::SQR_L],
-			66..=89 => [icon::SQR_L, icon::SQR_L, icon::SQR_S],
-			33..=65 => [icon::SQR_L, icon::SQR_S, icon::SQR_S],
+			46..=89 => [icon::SQR_L, icon::SQR_L, icon::SQR_S],
+			16..=45 => [icon::SQR_L, icon::SQR_S, icon::SQR_S],
 			_ => [icon::SQR_S, icon::SQR_S, icon::SQR_S],
 		};
 
@@ -84,7 +84,7 @@ impl fmt::Display for Battery {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let main_icn = match (self.plugged_in, self.pct) {
 			(true, ..) => icon::BOLT,
-			(false, 33..=100) => icon::BATT_HIG,
+			(false, 16..=100) => icon::BATT_HIG,
 			_ => icon::BATT_LOW,
 		};
 
@@ -105,12 +105,12 @@ impl Widget for Battery {
 
 		match (self.plugged_in, self.pct) {
 			(true, 90..=100) => self.charge_full(),
-			(true, 66..=89) => self.charge_mid(2),
-			(true, 33..=65) => self.charge_mid(1),
-			(true, 0..=32) => self.charge_low(),
-			(false, 66..=89) => self.discharge(2),
-			(false, 33..=65) => self.discharge(1),
-			(false, 0..=32) => self.discharge(0),
+			(true, 46..=89) => self.charge_mid(2),
+			(true, 16..=45) => self.charge_mid(1),
+			(true, 0..=15) => self.charge_low(),
+			(false, 46..=89) => self.discharge(2),
+			(false, 16..=45) => self.discharge(1),
+			(false, 0..=15) => self.discharge(0),
 			_ => (),
 		};
 

@@ -1,10 +1,17 @@
-use libc;
-
 use std::fmt;
 
 use crate::common::icon;
 use crate::common::Widget;
 use crate::network::{interface, netlink};
+
+const AF_INET: i32 = 2;
+
+const SOCK_STREAM: i32 = 1;
+
+extern {
+	fn close(fd: i32) -> i32;
+	fn socket(domain: i32, typ: i32, protocol: i32) -> i32;
+}
 
 #[derive(Clone,Copy)]
 struct ConnStat {
@@ -61,7 +68,7 @@ impl Network {
 
 		self.conn_stat.reset();
 		for iface in &self.ifaces {
-			match iface.get_class() {
+			match iface.class {
 				interface::Class::Eth => {
 					if iface.is_running() {
 						self.conn_stat.set_wired();
@@ -79,7 +86,7 @@ impl Network {
 	}
 
 	pub fn new() -> Network {
-		let sock: i32 = unsafe { libc::socket(libc::AF_INET, libc::SOCK_STREAM, 0) };
+		let sock: i32 = unsafe { socket(AF_INET, SOCK_STREAM, 0) };
 		if sock <= 0 {
 			panic!("Could not open socket");
 		}
@@ -107,7 +114,7 @@ impl Widget for Network {
 		for msg in &msgs {
 			let mut i = 0;
 			while i < self.ifaces.len() &&
-				self.ifaces[i].get_index() != msg.devidx
+				self.ifaces[i].index as u32 != msg.devidx
 			{
 				i += 1;
 			}
@@ -119,13 +126,13 @@ impl Widget for Network {
 
 			match msg.modop {
 				netlink::IPADD => {
-					self.ifaces[i].set_ipv4(msg.ipv4);
+					self.ifaces[i].ipv4 = msg.ipv4;
 				},
 				netlink::IPRMV => {
-					if self.ifaces[i].get_ipv4() != msg.ipv4 {
+					if self.ifaces[i].ipv4 != msg.ipv4 {
 						panic!("IPv4 desync");
 					}
-					self.ifaces[i].rm_ipv4();
+					self.ifaces[i].ipv4 = 0;
 				},
 				_ => panic!("Invalid modop {}", msg.modop),
 			}
@@ -137,7 +144,7 @@ impl Widget for Network {
 
 impl Drop for Network {
 	fn drop(&mut self) {
-		unsafe { libc::close(self.sock) };
+		unsafe { close(self.sock) };
 	}
 }
 

@@ -1,5 +1,5 @@
 use std::fmt;
 
 pub trait Widget: fmt::Display {
-	fn update(&mut self);
+	fn update(&mut self) -> bool;
 }

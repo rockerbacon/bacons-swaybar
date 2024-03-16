@@ -5,7 +5,7 @@ const IN_NONBLOCK: i32 = 0x800;
 const IN_ACCESS: i32 = 0x1;
 
 const MAX_NAMELEN: usize = 64;
-const Q_SIZE: usize = 64;
+const Q_SIZE: usize = 16;
 
 #[repr(C)]
 pub struct InotifyMsg {

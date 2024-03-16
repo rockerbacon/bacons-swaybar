@@ -186,12 +186,14 @@ impl Sysfs {
 	pub fn update(&mut self) -> bool {
 		let msgs = self.watcher.recvmsg();
 
+		let mut run_discard: bool = false;
 		let mut has_updates: bool = false;
 		for msg in msgs {
 			match self.devices.get_mut(&msg.wd) {
 				Some(device) => {
 					match device.attrs.get_mut(msg.get_name()) {
 						Some(attr) => {
+							run_discard = true;
 							has_updates =
 								Sysfs::update_attr(attr, has_updates);
 						},
@@ -202,7 +204,7 @@ impl Sysfs {
 			}
 		}
 
-		if has_updates {
+		if run_discard {
 			// purge events created by Sysfs::update_attr()
 			self.watcher.discmsg();
 		}

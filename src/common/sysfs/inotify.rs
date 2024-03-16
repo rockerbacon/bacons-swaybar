@@ -101,7 +101,10 @@ impl Inotify {
 		};
 
 		match msgcount {
-			-1 => panic!("Failure reading msgs"),
+			-1 => panic!(
+				"Failure reading msgs: {}",
+				std::io::Error::last_os_error()
+			),
 			-2 => panic!("Message queue too small"),
 			-3 => panic!("Inotify event name overflow"),
 			_ => (),

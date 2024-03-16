@@ -40,10 +40,12 @@ ssize_t sysfsinotify_recvmsg(
 	int msgcount = 0;
 	ssize_t bytes = read(fd, buf, buflen);
 
-	if (bytes == EWOULDBLOCK) {
-		return 0;
-	} else if (bytes < 0) {
-		return -1;
+	if (bytes < 0) {
+		if (errno == EWOULDBLOCK) {
+			return 0;
+		} else {
+			return -1;
+		}
 	}
 
 	struct inotify_event *it = (struct inotify_event*)buf;

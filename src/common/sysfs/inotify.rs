@@ -5,7 +5,7 @@ const IN_NONBLOCK: i32 = 0x800;
 const IN_ACCESS: i32 = 0x1;
 
 const MAX_NAMELEN: usize = 64;
-const Q_SIZE: usize = 16;
+const Q_SIZE: usize = 24;
 
 #[repr(C)]
 pub struct InotifyMsg {
@@ -90,7 +90,7 @@ impl Inotify {
 	}
 
 	pub fn recvmsg<'a>(&'a mut self) -> Vec<&'a InotifyMsg> {
-		let msgcount: isize = unsafe {
+		let mut msgcount: isize = unsafe {
 			sysfsinotify_recvmsg(
 				self.fd,
 				&mut self.buf as *mut u8,
@@ -105,7 +105,11 @@ impl Inotify {
 				"Failure reading msgs: {}",
 				std::io::Error::last_os_error()
 			),
-			-2 => panic!("Message queue too small"),
+			// Often times a sysfs access happens
+			// multiple times in quick succession.
+			// If the queue gets full, let's just
+			// ignore it and move on to the updates.
+			-2 => msgcount = Q_SIZE as isize,
 			-3 => panic!("Inotify event name overflow"),
 			_ => (),
 		}

@@ -5,7 +5,6 @@ mod clock;
 mod network;
 
 use std::cell::RefCell;
-use std::env;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -25,11 +24,8 @@ fn main() {
 		&mut clock_wid,
 	];
 
-	let separator: String = env::var("SEPARATOR")
-		.unwrap_or(String::from("  ⋮  "));
-	let suffix: String = env::var("SUFFIX")
-		.unwrap_or(String::from("  "));
-
+	println!("{{\"version\":1,\"click_events\":true}}");
+	print!("[");
 	loop {
 		std::thread::sleep(
 			Duration::new(0, time.borrow().align_ns() as u32)
@@ -41,11 +37,18 @@ fn main() {
 		}
 
 		if update {
-			for wid in widgets[..widgets.len()-1].iter() {
-				print!("{}{}", wid, separator);
+			print!(
+				"[{{\"name\":\"0\",\"full_text\":\"   {}   \"}}",
+				widgets[0],
+			);
+			for i in 1..widgets.len() {
+				print!(
+					",{{\"name\":\"{}\",\"full_text\":\"   {}   \"}}",
+					i,
+					widgets[i],
+				);
 			}
-			print!("{}", widgets[widgets.len()-1]);
-			println!("{}", suffix);
+			println!("],");
 		}
 		time.borrow_mut().update();
 	}

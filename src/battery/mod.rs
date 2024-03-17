@@ -96,24 +96,43 @@ impl Widget for Battery {
 	fn update(&mut self) -> bool {
 		let has_updates = self.sysfs.update();
 
-		if !has_updates {
+		if has_updates {
+			self.update_plugged_in();
+			self.update_pct();
+
+			match (self.plugged_in, self.pct) {
+				(true, 90..=100) => self.charge_full(),
+				(true, 46..=89) => self.charge_mid(2),
+				(true, 16..=45) => self.charge_mid(1),
+				(true, 0..=15) => self.charge_low(),
+				(false, 46..=89) => self.discharge(2),
+				(false, 16..=45) => self.discharge(1),
+				(false, 0..=15) => self.discharge(0),
+				_ => (),
+			};
+
+			return true;
+		} else if self.plugged_in {
+			let is_animated = match self.pct {
+				46..=89 => {
+					self.charge_mid(2);
+					return true;
+				},
+				16..=45 => {
+					self.charge_mid(1);
+					return true;
+				},
+				0..=15 => {
+					self.charge_low();
+					return true;
+				},
+				_ => false,
+			};
+
+			return is_animated;
+		} else {
 			return false;
-		}
+        }
 
-		self.update_plugged_in();
-		self.update_pct();
-
-		match (self.plugged_in, self.pct) {
-			(true, 90..=100) => self.charge_full(),
-			(true, 46..=89) => self.charge_mid(2),
-			(true, 16..=45) => self.charge_mid(1),
-			(true, 0..=15) => self.charge_low(),
-			(false, 46..=89) => self.discharge(2),
-			(false, 16..=45) => self.discharge(1),
-			(false, 0..=15) => self.discharge(0),
-			_ => (),
-		};
-
-		return true;
 	}
 }

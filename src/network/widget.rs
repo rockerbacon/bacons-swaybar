@@ -140,6 +140,10 @@ impl Widget for Network {
 
 		return self.update_conn_stat();
 	}
+
+	fn on_click(&self) -> Option<&str> {
+		return Some("manage-network");
+	}
 }
 
 impl Drop for Network {

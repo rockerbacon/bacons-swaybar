@@ -69,4 +69,8 @@ impl Widget for Clock {
 	fn update(&mut self) -> bool {
 		return self.time.borrow().timestamp() >= self.next_update.get();
 	}
+
+	fn on_click(&self) -> Option<&str> {
+		return None;
+	}
 }

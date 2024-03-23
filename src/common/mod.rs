@@ -1,6 +1,7 @@
 pub mod icon;
 mod sysfs;
 mod time;
+#[macro_use]
 mod widget;
 
 pub use sysfs::Sysfs;

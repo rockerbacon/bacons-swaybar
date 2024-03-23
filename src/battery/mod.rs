@@ -133,6 +133,9 @@ impl Widget for Battery {
 		} else {
 			return false;
         }
+	}
 
+	fn on_click(&self) -> Option<&str> {
+		return Some("display-battery-stats");
 	}
 }

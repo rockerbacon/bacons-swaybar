@@ -69,7 +69,7 @@ impl Time {
 	pub fn mon(&self) -> i32 {
 		return unsafe {
 			(*self.tm).tm_mon
-		};
+		} + 1;
 	}
 
 	pub fn year(&self) -> i32 {

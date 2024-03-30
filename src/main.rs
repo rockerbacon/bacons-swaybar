@@ -4,6 +4,7 @@ mod common;
 mod battery;
 mod clock;
 mod network;
+mod notifications;
 
 use std::cell::RefCell;
 use std::io;
@@ -144,8 +145,10 @@ fn main() {
 	let mut clock_wid = clock::Clock::new(time.clone());
 	let mut battery_wid = battery::Battery::new();
 	let mut network_wid = network::Network::new();
+	let mut notifications_wid = notifications::Notifications::new();
 
 	let mut widgets: Vec<&mut dyn Widget> = vec![
+		&mut notifications_wid,
 		&mut battery_wid,
 		&mut network_wid,
 		&mut clock_wid,

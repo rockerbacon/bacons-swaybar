@@ -1,5 +1,6 @@
 pub const BATT_HIG: char = '\u{1f50b}';
 pub const BATT_LOW: char = '\u{1faab}';
+pub const BELL: char = '\u{1F514}';
 pub const BOLT: char = '\u{26a1}';
 pub const LAPTOP: char = '\u{1F4BB}';
 pub const GLOBE: char = '\u{1F310}';

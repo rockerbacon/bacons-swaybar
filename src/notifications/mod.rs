@@ -1,7 +1,6 @@
 use std::fmt;
 use std::fs;
 use std::io::ErrorKind;
-use std::net::Shutdown;
 use std::os::unix::net::UnixDatagram;
 use std::path::PathBuf;
 use std::process::Command;
@@ -18,7 +17,6 @@ pub struct Notifications {
 	buff: [u8; 1],
 	enabled: bool,
 	sock: UnixDatagram,
-	sock_path: PathBuf,
 }
 
 impl Notifications {
@@ -39,6 +37,10 @@ impl Notifications {
 		sock_path.push(uid.to_string());
 		sock_path.push("notif-toggle.sock");
 
+		if sock_path.exists() {
+			fs::remove_file(&sock_path).unwrap();
+		}
+
 		let sock = UnixDatagram::bind(&sock_path).unwrap();
 		sock.set_nonblocking(true).unwrap();
 
@@ -46,16 +48,7 @@ impl Notifications {
 			buff: Default::default(),
 			enabled: Notifications::get_notif_state(),
 			sock,
-			sock_path,
 		};
-	}
-}
-
-impl Drop for Notifications {
-	fn drop(&mut self) {
-		self.sock.shutdown(Shutdown::Both).unwrap();
-		// FIXME this is not running
-		fs::remove_file(&self.sock_path).unwrap();
 	}
 }
 

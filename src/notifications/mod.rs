@@ -81,6 +81,6 @@ impl Widget for Notifications {
 	}
 
 	fn on_click(&self) -> Option<&str> {
-		return Some("toggle-notifications");
+		return Some("notification-center");
 	}
 }

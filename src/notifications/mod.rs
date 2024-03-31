@@ -1,3 +1,4 @@
+use std::env;
 use std::fmt;
 use std::fs;
 use std::io::ErrorKind;
@@ -8,10 +9,6 @@ use std::process::Stdio;
 
 use crate::common::icon;
 use crate::common::Widget;
-
-extern {
-	fn geteuid() -> u32;
-}
 
 pub struct Notifications {
 	buff: [u8; 1],
@@ -32,9 +29,9 @@ impl Notifications {
 	}
 
 	pub fn new() -> Notifications {
-		let uid = unsafe { geteuid() };
-		let mut sock_path = PathBuf::from("/var/run/user");
-		sock_path.push(uid.to_string());
+		let mut sock_path = PathBuf::from(
+			env::var("XDG_RUNTIME_DIR").unwrap_or(String::from("/tmp"))
+		);
 		sock_path.push("notif-toggle.sock");
 
 		if sock_path.exists() {

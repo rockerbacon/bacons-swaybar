@@ -8,6 +8,7 @@ use crate::common::Sysfs;
 pub struct Battery {
 	anim_cycle: u8,
 	bar: u8,
+	icon: char,
 	max_charge: u8,
 	sysfs: Sysfs,
 	plugged_in: bool,
@@ -20,6 +21,16 @@ impl Battery {
 
 	fn update_plugged_in(&mut self) {
 		self.plugged_in = self.sysfs.get::<char>("AC", "online") == '1';
+	}
+
+	fn update_icon(&mut self, pct: u8) {
+		if self.plugged_in {
+			self.icon = icon::BOLT;
+		} else if pct <= 15 {
+			self.icon = icon::BATT_LOW;
+		} else {
+			self.icon = icon::BATT_HIG;
+		}
 	}
 
 	fn update_bar(&mut self, pct: u8) {
@@ -61,6 +72,7 @@ impl Battery {
 		let mut bat = Battery {
 			anim_cycle: 0,
 			bar: 0,
+			icon: icon::BATT_LOW,
 			max_charge,
 			sysfs: Sysfs::new("power_supply"),
 			plugged_in: false,
@@ -69,8 +81,10 @@ impl Battery {
 		bat.sysfs.watch("BAT0", "capacity");
 		bat.sysfs.watch("AC", "online");
 
+		let pct = bat.get_pct();
 		bat.update_plugged_in();
-		bat.update_bar(bat.get_pct());
+		bat.update_bar(pct);
+		bat.update_icon(pct);
 
 		return bat;
 	}
@@ -78,13 +92,14 @@ impl Battery {
 
 impl fmt::Display for Battery {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		let main_icn = match (self.plugged_in, self.bar) {
-			(true, ..) => icon::BOLT,
-			(false, 0b1..=0b111) => icon::BATT_HIG,
-			_ => icon::BATT_LOW,
-		};
-
-		return write!(f, "{} {}{}{}", main_icn, self.bar_icon(0b1), self.bar_icon(0b10), self.bar_icon(0b100));
+		return write!(
+			f,
+			"{} {}{}{}",
+			self.icon,
+			self.bar_icon(0b1),
+			self.bar_icon(0b10),
+			self.bar_icon(0b100)
+		);
 	}
 }
 
@@ -99,6 +114,7 @@ impl Widget for Battery {
 		if has_updates {
 			self.update_plugged_in();
 			self.update_bar(pct);
+			self.update_icon(pct);
 		} 
 
 		if self.plugged_in && pct < self.max_charge - 5 {

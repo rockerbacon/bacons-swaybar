@@ -16,7 +16,7 @@ int refresh;
 struct timespec ts;
 struct tm dt;
 
-int display(char* buff, size_t buffsize) {
+int clk_display(char* buff, size_t buffsize) {
 	clock_gettime(CLOCK_REALTIME, &ts);
 	localtime_r(&ts.tv_sec, &dt);
 
@@ -42,7 +42,7 @@ int display(char* buff, size_t buffsize) {
 	return outsize;
 }
 
-void init(void) {
+void clk_init(void) {
 	const char* precision_str = getenv("CLOCK_PRECISION");
 	const char* refresh_str = getenv("CLOCK_REFRESH");
 
@@ -60,7 +60,7 @@ void init(void) {
 	}
 
 	if (refresh_str == NULL) {
-		refresh = precision;
+		refresh = PRECISION_SEC;
 	} else if (strcmp(refresh_str, "seconds") == 0) {
 		refresh = PRECISION_SEC;
 	} else if (strcmp(refresh_str, "minutes") == 0) {
@@ -82,7 +82,7 @@ void clk_sync_interval(struct timespec* sleep_duration) {
 }
 
 struct wgt wgt_clock = {
-	*display,
-	*init,
+	*clk_display,
+	*clk_init,
 	NULL,
 };

@@ -16,5 +16,9 @@ $(BUILDDIR)/$(WIDGETSDIR)/%.o: $(WIDGETSDIR)/%.c $(WIDGETSDIR)/%.h $(WIDGETSDIR)
 	mkdir -p $(BUILDDIR)/$(WIDGETSDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILDDIR)/main: src/main.c $(WIDGET_OBJS)
+$(BUILDDIR)/%.o: src/%.c src/%.h
+	mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILDDIR)/main: src/main.c $(BUILDDIR)/sway.o $(BUILDDIR)/sysfs.o $(WIDGET_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^

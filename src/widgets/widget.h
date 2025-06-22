@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stdlib.h>
+#include <stdio.h>
 
 struct wgt {
-	int (*display)(char*,size_t);
+	void (*display)(FILE*);
 	void (*init)(void);
 	void (*on_click)(void);
 };

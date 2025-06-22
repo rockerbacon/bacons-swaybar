@@ -21,6 +21,7 @@ void sway_exec(char* const file, char* const argv[]) {
 	exec_args[argc+3] = NULL;
 
 	if (fork() == 0) {
+		close(1);
 		execvp("swaymsg", exec_args);
 	}
 }

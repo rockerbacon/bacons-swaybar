@@ -14,30 +14,23 @@ int refresh;
 struct timespec ts;
 struct tm dt;
 
-int clk_display(char* buff, size_t buffsize) {
+void clk_display(FILE* out) {
 	clock_gettime(CLOCK_REALTIME, &ts);
 	localtime_r(&ts.tv_sec, &dt);
 
-	strftime(buff, buffsize, "%Y-%m-%d %H:%M", &dt);
-
-	size_t outsize = sizeof("YYYY-MM-DD HH:mm") - 1;
+	fprintf(
+		out, "%d-%02d-%02d %02d:%02d",
+		dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min
+	);
 
 	if (precision >= PRECISION_SEC) {
-		if (buffsize > outsize) {
-			strftime(buff+outsize, buffsize-outsize, ":%S", &dt);
-		}
-		outsize += 3;
+		fprintf(out, ":%02d", dt.tm_sec);
 	}
 
 	if (precision >= PRECISION_MSEC) {
-		if (buffsize > outsize) {
-			int msec = ts.tv_nsec / 1e6;
-			snprintf(buff+outsize, buffsize-outsize, ".%03d", msec);
-		}
-		outsize += 4;
+		int msec = ts.tv_nsec / 1e6;
+		fprintf(out, ".%03d", msec);
 	}
-
-	return outsize;
 }
 
 void clk_init(void) {
@@ -80,7 +73,7 @@ void clk_sync_interval(struct timespec* sleep_duration) {
 }
 
 struct wgt wgt_clock = {
-	*clk_display,
-	*clk_init,
+	clk_display,
+	clk_init,
 	NULL,
 };

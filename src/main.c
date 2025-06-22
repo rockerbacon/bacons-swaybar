@@ -4,15 +4,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <clicks.h>
+
 #include <widgets/battery.h>
 #include <widgets/clock.h>
 #include <widgets/network.h>
 #include <widgets/notifications.h>
 
-#define BUFFSIZE 512
-
 int main(void) {
-	char buff[BUFFSIZE];
 	struct wgt* wgts[] = {
 		&wgt_notifications,
 		&wgt_battery,
@@ -21,8 +20,6 @@ int main(void) {
 	};
 	size_t wgt_count = sizeof(wgts) / sizeof(struct wgt*);
 	struct timespec sleep_duration;
-
-	memset(buff, 0, BUFFSIZE);
 
 	setlocale(LC_CTYPE, "en_US.UTF-8");
 
@@ -33,21 +30,24 @@ int main(void) {
 		}
 	}
 
-	while(1) {
-		size_t offset = 0;
-		for (size_t i = 0; i < wgt_count; i++) {
-			struct wgt* w = wgts[i];
-			if (w->display != NULL) {
-				offset += w->display(buff+offset, BUFFSIZE-offset);
-			}
+	clicks_start_thread(wgts, wgt_count);
 
-			if (offset >= BUFFSIZE) {
-				fprintf(stderr, "FATAL: buffer overflow\n");
-				exit(1);
-			}
+	fprintf(stdout, "{\"version\":1,\"click_events\":true}\n[");
+
+	while(1) {
+		fprintf(stdout, "[{\"name\":\"0\",\"full_text\":\"   ");
+		wgts[0]->display(stdout);
+		fprintf(stdout, "   \"}");
+
+		for (size_t i = 1; i < wgt_count; i++) {
+			fprintf(stdout, ",{\"name\":\"%lu\",\"full_text\":\"   ", i);
+			wgts[i]->display(stdout);
+			fprintf(stdout, "   \"}");
 		}
 
-		fprintf(stdout, "%s\n", buff);
+		fprintf(stdout, "],\n");
+		fflush(stdout);
+
 		clk_sync_interval(&sleep_duration);
 		nanosleep(&sleep_duration, NULL);
 	}

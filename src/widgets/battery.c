@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <sway.h>
 #include <sysfs.h>
@@ -18,56 +19,56 @@ struct sfs_param ac_online;
 struct sfs_param batt_capacity;
 int batt_capacity_max;
 size_t anim_cycle = 0;
-const wchar_t chr_anim[] = {ICN_SQR_EMPTY, ICN_SQR_FULL};
+const int chr_anim[] = {ICN_SQR_EMPTY, ICN_SQR_FULL};
 
-int batt_display(char* buff, size_t buffsize) {
+void batt_display(FILE* out) {
 	int charging = sfs_read_char(&ac_online) == '1';
 	int capacity = sfs_read_int(&batt_capacity);
 
 	if (charging) {
-		const wchar_t anim_sqr = chr_anim[anim_cycle];
+		const int anim_sqr = chr_anim[anim_cycle];
 		anim_cycle ^= 1;
 
 		if (capacity < BATT_LOW) {
-			return snprintf(
-				buff, buffsize, "%lc%lc%lc%lc",
+			fprintf(
+				out, "%lc%lc%lc%lc",
 				ICN_BATT_CHR, anim_sqr, ICN_SQR_EMPTY, ICN_SQR_EMPTY
 			);
 		} else if (capacity < BATT_HIG) {
-			return snprintf(
-				buff, buffsize, "%lc%lc%lc%lc",
+			fprintf(
+				out, "%lc%lc%lc%lc",
 				ICN_BATT_CHR, ICN_SQR_FULL, anim_sqr, ICN_SQR_EMPTY
 			);
 		} else if (capacity < batt_capacity_max - 5) {
-			return snprintf(
-				buff, buffsize, "%lc%lc%lc%lc",
+			fprintf(
+				out, "%lc%lc%lc%lc",
 				ICN_BATT_CHR, ICN_SQR_FULL, ICN_SQR_FULL, anim_sqr
 			);
 		} else {
-			return snprintf(
-				buff, buffsize, "%lc%lc%lc%lc",
+			fprintf(
+				out, "%lc%lc%lc%lc",
 				ICN_BATT_CHR, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_FULL
 			);
 		}
 	} else {
 		if (capacity < BATT_CRIT) {
-			return snprintf(
-				buff, buffsize, "%lc%lc%lc%lc",
+			fprintf(
+				out, "%lc%lc%lc%lc",
 				ICN_BATT_LOW, ICN_SQR_EMPTY, ICN_SQR_EMPTY, ICN_SQR_EMPTY
 			);
 		} else if (capacity < BATT_LOW) {
-			return snprintf(
-				buff, buffsize, "%lc%lc%lc%lc",
+			fprintf(
+				out, "%lc%lc%lc%lc",
 				ICN_BATT_LOW, ICN_SQR_FULL, ICN_SQR_EMPTY, ICN_SQR_EMPTY
 			);
 		} else if (capacity < BATT_HIG) {
-			return snprintf(
-				buff, buffsize, "%lc%lc%lc%lc",
+			fprintf(
+				out, "%lc%lc%lc%lc",
 				ICN_BATT_HIG, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_EMPTY
 			);
 		} else {
-			return snprintf(
-				buff, buffsize, "%lc%lc%lc%lc",
+			fprintf(
+				out, "%lc%lc%lc%lc",
 				ICN_BATT_HIG, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_FULL
 			);
 		}
@@ -94,7 +95,7 @@ void batt_on_click(void) {
 }
 
 struct wgt wgt_battery = {
-	*batt_display,
-	*batt_init,
-	*batt_on_click,
+	batt_display,
+	batt_init,
+	batt_on_click,
 };

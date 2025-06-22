@@ -75,6 +75,7 @@ void clk_sync_interval(struct timespec* sleep_duration) {
 }
 
 struct wgt wgt_clock = {
+	NULL,
 	clk_display,
 	clk_init,
 	NULL,

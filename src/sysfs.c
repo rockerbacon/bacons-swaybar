@@ -11,7 +11,7 @@ void sfs_param_init(const char* path, struct sfs_param* param) {
 	}
 	param->fd = open(param->path, O_RDONLY);
 	if (param->fd < 0) {
-		fprintf(stderr, "FATAL: cannot read %s", param->path);
+		fprintf(stderr, "FATAL: cannot read %s\n", param->path);
 		exit(1);
 	}
 }
@@ -23,7 +23,7 @@ void sfs_param_destroy(struct sfs_param* param) {
 int sfs_read_int(struct sfs_param* param) {
 	lseek(param->fd, 0, SEEK_SET);
 	if (read(param->fd, &param->vstr, SFS_PARAM_MAX_VAL_SIZE) == -1) {
-		fprintf(stderr, "ERROR: failed to read int from %s", param->path);
+		fprintf(stderr, "ERROR: failed to read int from %s\n", param->path);
 		return 0;
 	}
 	param->vint = strtol(param->vstr, NULL, 10);
@@ -33,7 +33,7 @@ int sfs_read_int(struct sfs_param* param) {
 char sfs_read_char(struct sfs_param* param) {
 	lseek(param->fd, 0, SEEK_SET);
 	if (read(param->fd, &param->vchar, 1) == -1) {
-		fprintf(stderr, "ERROR: failed to read char from %s", param->path);
+		fprintf(stderr, "ERROR: failed to read char from %s\n", param->path);
 		return '\0';
 	}
 	return param->vchar;

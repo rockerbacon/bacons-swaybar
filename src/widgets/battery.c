@@ -21,6 +21,11 @@ int batt_capacity_max;
 size_t anim_cycle = 0;
 const int chr_anim[] = {ICN_SQR_EMPTY, ICN_SQR_FULL};
 
+void batt_destroy(void) {
+	sfs_param_destroy(&ac_online);
+	sfs_param_destroy(&batt_capacity);
+}
+
 int batt_display(char* buf, size_t bufsize) {
 	int charging = sfs_read_char(&ac_online) == '1';
 	int capacity = sfs_read_int(&batt_capacity);
@@ -95,6 +100,7 @@ void batt_on_click(void) {
 }
 
 struct wgt wgt_battery = {
+	batt_destroy,
 	batt_display,
 	batt_init,
 	batt_on_click,

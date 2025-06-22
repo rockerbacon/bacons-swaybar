@@ -63,6 +63,7 @@ void net_on_click(void) {
 }
 
 struct wgt wgt_network = {
+	NULL,
 	net_display,
 	NULL,
 	net_on_click,

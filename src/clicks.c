@@ -11,6 +11,7 @@
 thrd_t clicks_thrd;
 struct wgt** clicks_wgts;
 size_t clicks_wgt_count;
+int clicks_listening;
 
 size_t read_param_name(
 	const char* payload, size_t payload_size, size_t i, char* buf, size_t bufsize
@@ -127,7 +128,9 @@ size_t skip_value(const char* payload, size_t payload_size, size_t i) {
 int clicks_listen(void* args) {
 	char payload[CLICKS_PAYLOAD_MAX_SIZE];
 	char buf[CLICKS_BUF_SIZE];
-	while(1) {
+
+	clicks_listening = 0;
+	while(clicks_listening) {
 		fgets(payload, CLICKS_PAYLOAD_MAX_SIZE, stdin);
 
 		int left_button = 1;
@@ -166,6 +169,7 @@ int clicks_listen(void* args) {
 			}
 		}
 	}
+
 	return 0;
 }
 
@@ -173,5 +177,14 @@ void clicks_start_thread(struct wgt** wgts, size_t wgt_count) {
 	clicks_wgts = wgts;
 	clicks_wgt_count = wgt_count;
 
-	clicks_thrd = thrd_create(&clicks_thrd, clicks_listen, NULL);
+	int s = thrd_create(&clicks_thrd, clicks_listen, NULL);
+	if (s != thrd_success) {
+		fprintf(stderr, "FATAL: failed to spawn clicks thread\n");
+		exit(1);
+	}
+}
+
+void clicks_stop_thread(void) {
+	clicks_listening = 0;
+	thrd_join(clicks_thrd, NULL);
 }

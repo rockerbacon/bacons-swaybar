@@ -37,6 +37,7 @@ void ntf_on_click(void) {
 }
 
 struct wgt wgt_notifications = {
+	NULL,
 	ntf_display,
 	NULL,
 	ntf_on_click,

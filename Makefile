@@ -5,7 +5,7 @@ WIDGETSDIR=src/widgets
 WIDGET_SRCS=$(wildcard $(WIDGETSDIR)/*.c)
 WIDGET_OBJS=$(patsubst %.c,$(BUILDDIR)/%.o,$(WIDGET_SRCS))
 
-.PHONY: clean default
+.PHONY: clean default install uninstall
 
 default: $(BUILDDIR)/main
 
@@ -22,3 +22,11 @@ $(BUILDDIR)/%.o: src/%.c src/%.h
 
 $(BUILDDIR)/main: src/main.c $(BUILDDIR)/clicks.o $(BUILDDIR)/sway.o $(BUILDDIR)/sysfs.o $(WIDGET_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
+
+install: $(BUILDDIR)/main
+	mkdir -p ${HOME}/.local/bin
+	rm -f ${HOME}/.local/bin/bacons-swaybar
+	cp $< ${HOME}/.local/bin/bacons-swaybar
+
+uninstall:
+	rm -f ${HOME}/.local/bin/bacons-swaybar

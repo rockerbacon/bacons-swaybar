@@ -7,12 +7,14 @@
 #include <widgets/battery.h>
 #include <widgets/clock.h>
 #include <widgets/network.h>
+#include <widgets/notifications.h>
 
 #define BUFFSIZE 512
 
 int main(void) {
 	char buff[BUFFSIZE];
 	struct wgt* wgts[] = {
+		&wgt_notifications,
 		&wgt_battery,
 		&wgt_network,
 		&wgt_clock,

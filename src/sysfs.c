@@ -6,7 +6,9 @@
 #include <sysfs.h>
 
 void sfs_param_init(const char* path, struct sfs_param* param) {
-	param->path = path;
+	if (path != param->path) {
+		snprintf(param->path, SFS_PARAM_MAX_PATH_SIZE, "%s", path);
+	}
 	param->fd = open(param->path, O_RDONLY);
 	if (param->fd < 0) {
 		fprintf(stderr, "FATAL: cannot read %s", param->path);

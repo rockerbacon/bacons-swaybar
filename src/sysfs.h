@@ -1,10 +1,11 @@
 #pragma once
 
+#define SFS_PARAM_MAX_PATH_SIZE 128
 #define SFS_PARAM_MAX_VAL_SIZE 16
 
 struct sfs_param {
-	const char* path;
 	int fd;
+	char path[SFS_PARAM_MAX_PATH_SIZE];
 	union {
 		char vstr[SFS_PARAM_MAX_VAL_SIZE];
 		int vint;

@@ -1,6 +1,6 @@
 BUILDDIR=build
 CC=gcc
-CFLAGS=-Wall -Werror -pedantic -std=c23 -O2 -I src/.
+CFLAGS=-D_DEFAULT_SOURCE -Wall -Werror -pedantic -std=c23 -O2 -I src/.
 WIDGETSDIR=src/widgets
 WIDGET_SRCS=$(wildcard $(WIDGETSDIR)/*.c)
 WIDGET_OBJS=$(patsubst %.c,$(BUILDDIR)/%.o,$(WIDGET_SRCS))

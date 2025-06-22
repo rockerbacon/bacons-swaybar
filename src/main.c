@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 199309L
-
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +6,7 @@
 
 #include <widgets/battery.h>
 #include <widgets/clock.h>
+#include <widgets/network.h>
 
 #define BUFFSIZE 512
 
@@ -15,6 +14,7 @@ int main(void) {
 	char buff[BUFFSIZE];
 	struct wgt* wgts[] = {
 		&wgt_battery,
+		&wgt_network,
 		&wgt_clock,
 	};
 	size_t wgt_count = sizeof(wgts) / sizeof(struct wgt*);

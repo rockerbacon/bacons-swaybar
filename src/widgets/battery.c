@@ -21,7 +21,7 @@ int batt_capacity_max;
 size_t anim_cycle = 0;
 const int chr_anim[] = {ICN_SQR_EMPTY, ICN_SQR_FULL};
 
-void batt_display(FILE* out) {
+int batt_display(char* buf, size_t bufsize) {
 	int charging = sfs_read_char(&ac_online) == '1';
 	int capacity = sfs_read_int(&batt_capacity);
 
@@ -30,45 +30,45 @@ void batt_display(FILE* out) {
 		anim_cycle ^= 1;
 
 		if (capacity < BATT_LOW) {
-			fprintf(
-				out, "%lc%lc%lc%lc",
+			return snprintf(
+				buf, bufsize, "%lc%lc%lc%lc",
 				ICN_BATT_CHR, anim_sqr, ICN_SQR_EMPTY, ICN_SQR_EMPTY
 			);
 		} else if (capacity < BATT_HIG) {
-			fprintf(
-				out, "%lc%lc%lc%lc",
+			return snprintf(
+				buf, bufsize, "%lc%lc%lc%lc",
 				ICN_BATT_CHR, ICN_SQR_FULL, anim_sqr, ICN_SQR_EMPTY
 			);
 		} else if (capacity < batt_capacity_max - 5) {
-			fprintf(
-				out, "%lc%lc%lc%lc",
+			return snprintf(
+				buf, bufsize, "%lc%lc%lc%lc",
 				ICN_BATT_CHR, ICN_SQR_FULL, ICN_SQR_FULL, anim_sqr
 			);
 		} else {
-			fprintf(
-				out, "%lc%lc%lc%lc",
+			return snprintf(
+				buf, bufsize, "%lc%lc%lc%lc",
 				ICN_BATT_CHR, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_FULL
 			);
 		}
 	} else {
 		if (capacity < BATT_CRIT) {
-			fprintf(
-				out, "%lc%lc%lc%lc",
+			return snprintf(
+				buf, bufsize, "%lc%lc%lc%lc",
 				ICN_BATT_LOW, ICN_SQR_EMPTY, ICN_SQR_EMPTY, ICN_SQR_EMPTY
 			);
 		} else if (capacity < BATT_LOW) {
-			fprintf(
-				out, "%lc%lc%lc%lc",
+			return snprintf(
+				buf, bufsize, "%lc%lc%lc%lc",
 				ICN_BATT_LOW, ICN_SQR_FULL, ICN_SQR_EMPTY, ICN_SQR_EMPTY
 			);
 		} else if (capacity < BATT_HIG) {
-			fprintf(
-				out, "%lc%lc%lc%lc",
+			return snprintf(
+				buf, bufsize, "%lc%lc%lc%lc",
 				ICN_BATT_HIG, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_EMPTY
 			);
 		} else {
-			fprintf(
-				out, "%lc%lc%lc%lc",
+			return snprintf(
+				buf, bufsize, "%lc%lc%lc%lc",
 				ICN_BATT_HIG, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_FULL
 			);
 		}

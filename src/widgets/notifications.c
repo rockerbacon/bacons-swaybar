@@ -9,7 +9,7 @@
 #define ICN_NTF_ENABLED 0x1F514
 #define ICN_NTF_DISABLED 0x1F515
 
-void ntf_display(FILE* out) {
+int ntf_display(char* buf, size_t bufsize) {
 	int pid = fork();
 	if (pid == 0) {
 		close(1);
@@ -20,13 +20,14 @@ void ntf_display(FILE* out) {
 			dup2(fd, 1);
 		}
 		execlp("notifications-enabled", "notifications-enabled");
+		return 0;
 	} else {
 		int wstatus;
 		waitpid(pid, &wstatus, 0);
 		if (WEXITSTATUS(wstatus) == 0) {
-			fprintf(out, "%lc", ICN_NTF_ENABLED);
+			return snprintf(buf, bufsize, "%lc", ICN_NTF_ENABLED);
 		} else {
-			fprintf(out, "%lc", ICN_NTF_DISABLED);
+			return snprintf(buf, bufsize, "%lc", ICN_NTF_DISABLED);
 		}
 	}
 }

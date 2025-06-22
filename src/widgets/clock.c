@@ -14,23 +14,25 @@ int refresh;
 struct timespec ts;
 struct tm dt;
 
-void clk_display(FILE* out) {
+int clk_display(char* buf, size_t bufsize) {
 	clock_gettime(CLOCK_REALTIME, &ts);
 	localtime_r(&ts.tv_sec, &dt);
 
-	fprintf(
-		out, "%d-%02d-%02d %02d:%02d",
+	int output = snprintf(
+		buf, bufsize, "%d-%02d-%02d %02d:%02d",
 		dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min
 	);
 
 	if (precision >= PRECISION_SEC) {
-		fprintf(out, ":%02d", dt.tm_sec);
+		output += snprintf(buf+output, bufsize-output, ":%02d", dt.tm_sec);
 	}
 
 	if (precision >= PRECISION_MSEC) {
 		int msec = ts.tv_nsec / 1e6;
-		fprintf(out, ".%03d", msec);
+		output += snprintf(buf+output, bufsize-output, ".%03d", msec);
 	}
+
+	return output;
 }
 
 void clk_init(void) {

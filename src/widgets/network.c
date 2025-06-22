@@ -17,7 +17,7 @@
 
 #define NET_PATH_MAX_SIZE 128
 
-void net_display(FILE* out) {
+int net_display(char* buf, size_t bufsize) {
 	static char path[NET_PATH_MAX_SIZE];
 	struct ifaddrs* addrs;
 
@@ -50,11 +50,11 @@ void net_display(FILE* out) {
 	freeifaddrs(addrs);
 
 	if (conn_wireless) {
-		fprintf(out, "%lc   %lc", ICN_LAPTOP, ICN_GLOBE);
+		return snprintf(buf, bufsize, "%lc   %lc", ICN_LAPTOP, ICN_GLOBE);
 	} else if (conn_wired) {
-		fprintf(out, "%lc - %lc", ICN_LAPTOP, ICN_GLOBE);
+		return snprintf(buf, bufsize, "%lc - %lc", ICN_LAPTOP, ICN_GLOBE);
 	} else {
-		fprintf(out, "%lc x %lc", ICN_LAPTOP, ICN_QUESTION);
+		return snprintf(buf, bufsize, "%lc x %lc", ICN_LAPTOP, ICN_QUESTION);
 	}
 }
 

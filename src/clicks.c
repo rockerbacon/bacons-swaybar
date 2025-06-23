@@ -129,8 +129,8 @@ int clicks_listen(void* args) {
 	char payload[CLICKS_PAYLOAD_MAX_SIZE];
 	char buf[CLICKS_BUF_SIZE];
 
-	clicks_listening = 0;
-	while(clicks_listening) {
+	clicks_listening = 1;
+	while(clicks_listening == 1) {
 		fgets(payload, CLICKS_PAYLOAD_MAX_SIZE, stdin);
 
 		int left_button = 1;

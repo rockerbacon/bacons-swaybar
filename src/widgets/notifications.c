@@ -10,6 +10,8 @@
 #define ICN_NTF_ENABLED 0x1F514
 #define ICN_NTF_DISABLED 0x1F515
 
+#define NTF_UPD_SEC 0
+
 int ntf_display(char* buf, size_t bufsize) {
 	if (buf[0] != '\0' && sig_usr1 == 0) {
 		return 0;
@@ -42,8 +44,5 @@ void ntf_on_click(void) {
 }
 
 struct wgt wgt_notifications = {
-	NULL,
-	ntf_display,
-	NULL,
-	ntf_on_click,
+	NTF_UPD_SEC, NULL, ntf_display, NULL, ntf_on_click
 };

@@ -15,69 +15,38 @@
 #define BATT_LOW 33
 #define BATT_HIG 66
 
-struct sfs_param ac_online;
+#define BATT_UPD_SEC 13
+
+struct sfs_param batt_ac_online;
 struct sfs_param batt_capacity;
 int batt_capacity_max;
-size_t anim_cycle = 0;
-const int chr_anim[] = {ICN_SQR_EMPTY, ICN_SQR_FULL};
+int batt_bar[] = {ICN_SQR_EMPTY, ICN_SQR_FULL};
 
 void batt_destroy(void) {
-	sfs_param_destroy(&ac_online);
+	sfs_param_destroy(&batt_ac_online);
 	sfs_param_destroy(&batt_capacity);
 }
 
 int batt_display(char* buf, size_t bufsize) {
-	int charging = sfs_read_char(&ac_online) == '1';
+	int charging = sfs_read_char(&batt_ac_online) == '1';
 	int capacity = sfs_read_int(&batt_capacity);
+	int main_icn;
 
 	if (charging) {
-		const int anim_sqr = chr_anim[anim_cycle];
-		anim_cycle ^= 1;
-
-		if (capacity < BATT_LOW) {
-			return snprintf(
-				buf, bufsize, "%lc%lc%lc%lc",
-				ICN_BATT_CHR, anim_sqr, ICN_SQR_EMPTY, ICN_SQR_EMPTY
-			);
-		} else if (capacity < BATT_HIG) {
-			return snprintf(
-				buf, bufsize, "%lc%lc%lc%lc",
-				ICN_BATT_CHR, ICN_SQR_FULL, anim_sqr, ICN_SQR_EMPTY
-			);
-		} else if (capacity < batt_capacity_max - 5) {
-			return snprintf(
-				buf, bufsize, "%lc%lc%lc%lc",
-				ICN_BATT_CHR, ICN_SQR_FULL, ICN_SQR_FULL, anim_sqr
-			);
-		} else {
-			return snprintf(
-				buf, bufsize, "%lc%lc%lc%lc",
-				ICN_BATT_CHR, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_FULL
-			);
-		}
+		main_icn = ICN_BATT_CHR;
+	} else if (capacity < BATT_CRIT) {
+		main_icn = ICN_BATT_LOW;
 	} else {
-		if (capacity < BATT_CRIT) {
-			return snprintf(
-				buf, bufsize, "%lc%lc%lc%lc",
-				ICN_BATT_LOW, ICN_SQR_EMPTY, ICN_SQR_EMPTY, ICN_SQR_EMPTY
-			);
-		} else if (capacity < BATT_LOW) {
-			return snprintf(
-				buf, bufsize, "%lc%lc%lc%lc",
-				ICN_BATT_LOW, ICN_SQR_FULL, ICN_SQR_EMPTY, ICN_SQR_EMPTY
-			);
-		} else if (capacity < BATT_HIG) {
-			return snprintf(
-				buf, bufsize, "%lc%lc%lc%lc",
-				ICN_BATT_HIG, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_EMPTY
-			);
-		} else {
-			return snprintf(
-				buf, bufsize, "%lc%lc%lc%lc",
-				ICN_BATT_HIG, ICN_SQR_FULL, ICN_SQR_FULL, ICN_SQR_FULL
-			);
-		}
+		main_icn = ICN_BATT_HIG;
 	}
+
+	return snprintf(
+		buf, bufsize, "%lc %lc%lc%lc",
+		main_icn,
+		batt_bar[capacity > BATT_CRIT],
+		batt_bar[capacity > BATT_LOW],
+		batt_bar[capacity > BATT_HIG]
+	);
 }
 
 void batt_init(void) {
@@ -91,7 +60,7 @@ void batt_init(void) {
 		"/sys/class/power_supply/BAT0/capacity", &batt_capacity
 	);
 	sfs_param_init(
-		"/sys/class/power_supply/AC/online", &ac_online
+		"/sys/class/power_supply/AC/online", &batt_ac_online
 	);
 }
 
@@ -100,8 +69,5 @@ void batt_on_click(void) {
 }
 
 struct wgt wgt_battery = {
-	batt_destroy,
-	batt_display,
-	batt_init,
-	batt_on_click,
+	BATT_UPD_SEC, batt_destroy, batt_display, batt_init, batt_on_click
 };

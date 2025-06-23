@@ -9,13 +9,14 @@
 #define PRECISION_SEC 2
 #define PRECISION_MSEC 3
 
+#define CLK_UPD_SEC 0
+
 int precision;
 int refresh;
 struct timespec ts;
 struct tm dt;
 
 int clk_display(char* buf, size_t bufsize) {
-	clock_gettime(CLOCK_REALTIME, &ts);
 	localtime_r(&ts.tv_sec, &dt);
 
 	int output = snprintf(
@@ -74,9 +75,18 @@ void clk_sync_interval(struct timespec* sleep_duration) {
 	}
 }
 
+time_t clk_sec(void) {
+	return ts.tv_sec;
+}
+
+long clk_nsec(void) {
+	return ts.tv_nsec;
+}
+
+void clk_upd(void) {
+	clock_gettime(CLOCK_REALTIME, &ts);
+}
+
 struct wgt wgt_clock = {
-	NULL,
-	clk_display,
-	clk_init,
-	NULL,
+	CLK_UPD_SEC, NULL, clk_display, clk_init, NULL
 };

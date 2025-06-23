@@ -16,6 +16,7 @@
 #define ICN_QUESTION 0x2753
 
 #define NET_PATH_MAX_SIZE 128
+#define NET_UPD_SEC 7
 
 int net_display(char* buf, size_t bufsize) {
 	static char path[NET_PATH_MAX_SIZE];
@@ -63,8 +64,5 @@ void net_on_click(void) {
 }
 
 struct wgt wgt_network = {
-	NULL,
-	net_display,
-	NULL,
-	net_on_click,
+	NET_UPD_SEC, NULL, net_display, NULL, net_on_click
 };

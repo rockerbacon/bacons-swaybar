@@ -26,4 +26,11 @@ void sig_register_hndls(void) {
 	memset(&sigusr_hndl, 0, sizeof(struct sigaction));
 	sigusr_hndl.sa_handler = sig_hndl_usr;
 	sigaction(SIGUSR1, &sigusr_hndl, NULL);
+
+	sig_term = 0;
+	sig_usr1 = 0;
+}
+
+void sig_clear(void) {
+	sig_usr1 = 0;
 }

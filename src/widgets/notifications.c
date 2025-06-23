@@ -3,6 +3,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <sighandler.h>
 #include <sway.h>
 #include <widgets/notifications.h>
 
@@ -10,6 +11,10 @@
 #define ICN_NTF_DISABLED 0x1F515
 
 int ntf_display(char* buf, size_t bufsize) {
+	if (buf[0] != '\0' && sig_usr1 == 0) {
+		return 0;
+	}
+
 	int pid = fork();
 	if (pid == 0) {
 		close(1);

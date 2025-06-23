@@ -1,16 +1,16 @@
 #include <locale.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <clicks.h>
-
+#include <sighandler.h>
 #include <widgets/battery.h>
 #include <widgets/clock.h>
 #include <widgets/network.h>
 #include <widgets/notifications.h>
+#include <widgets/widget.h>
 
 #define MAIN_BUFSIZE 256
 
@@ -22,18 +22,14 @@ struct wgt* wgts[] = {
 };
 size_t wgt_count = sizeof(wgts) / sizeof(struct wgt*);
 
-int running;
-
-void hndl_term(int) {
-	running = 0;
-}
-
 int main(void) {
 	char buf1[MAIN_BUFSIZE];
 	char buf2[MAIN_BUFSIZE];
 	char* fbuf;
 	char* bbuf;
 	struct timespec sleep_duration;
+
+	sig_register_hndls();
 
 	setlocale(LC_CTYPE, "en_US.UTF-8");
 
@@ -43,13 +39,6 @@ int main(void) {
 			w->init();
 		}
 	}
-
-	struct sigaction sigint_hndl;
-	memset(&sigint_hndl, 0, sizeof(struct sigaction));
-	sigint_hndl.sa_handler = hndl_term;
-	sigint_hndl.sa_flags = SA_RESETHAND;
-	sigaction(SIGINT, &sigint_hndl, NULL);
-	sigaction(SIGTERM, &sigint_hndl, NULL);
 
 	clicks_start_thread(wgts, wgt_count);
 
@@ -61,17 +50,17 @@ int main(void) {
 
 	size_t bufslice = MAIN_BUFSIZE / wgt_count;
 
-	running = 1;
-	while(running) {
+	while(sig_term == 0) {
 		int changes = 0;
 		for (size_t i = 0; i < wgt_count; i++) {
 			char* new = bbuf + i*bufslice;
+			char* old = fbuf + i*bufslice;
 
 			int output = wgts[i]->display(new, bufslice);
 
-			if (changes == 0 && output > 0) {
-				char* old = fbuf + i*bufslice;
-
+			if (output <= 0) {
+				memcpy(new, old, bufslice);
+			} else if (changes == 0) {
 				if (strcmp(new, old) != 0) {
 					changes = 1;
 				}
@@ -101,8 +90,6 @@ int main(void) {
 		clk_sync_interval(&sleep_duration);
 		nanosleep(&sleep_duration, NULL);
 	}
-
-	clicks_stop_thread();
 
 	for (size_t i = 0; i < wgt_count; i++) {
 		if (wgts[i]->destroy != NULL) {

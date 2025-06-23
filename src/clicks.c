@@ -1,17 +1,21 @@
+#include <poll.h>
 #include <stdio.h>
 #include <string.h>
 #include <threads.h>
 
 #include <clicks.h>
+#include <sighandler.h>
+#include <unistd.h>
 #include <widgets/widget.h>
 
-#define CLICKS_PAYLOAD_MAX_SIZE 128
 #define CLICKS_BUF_SIZE 32
+#define CLICKS_PAYLOAD_MAX_SIZE 128
+#define CLICKS_POLL_TIMEOUT 1000
 
 thrd_t clicks_thrd;
+
 struct wgt** clicks_wgts;
 size_t clicks_wgt_count;
-int clicks_listening;
 
 size_t read_param_name(
 	const char* payload, size_t payload_size, size_t i, char* buf, size_t bufsize
@@ -129,37 +133,57 @@ int clicks_listen(void* args) {
 	char payload[CLICKS_PAYLOAD_MAX_SIZE];
 	char buf[CLICKS_BUF_SIZE];
 
-	clicks_listening = 1;
-	while(clicks_listening == 1) {
-		fgets(payload, CLICKS_PAYLOAD_MAX_SIZE, stdin);
+	struct pollfd stdinfd = {
+		0, POLLIN, 0
+	};
+
+	while(sig_term == 0) {
+		int ready = poll(&stdinfd, 1, CLICKS_POLL_TIMEOUT);
+		if (ready < 0) {
+			fprintf(stderr, "ERROR: clicks thread failed to poll stdin\n");
+			return 1;
+		} else if (ready == 0) {
+			continue;
+		}
+
+		ssize_t payloadsize = read(
+			stdinfd.fd, payload, CLICKS_PAYLOAD_MAX_SIZE-1
+		);
+		if (payloadsize < 0) {
+			fprintf(stderr, "ERROR: clicks thread failed to read stdin\n");
+			return 1;
+		} else if (payloadsize == CLICKS_PAYLOAD_MAX_SIZE-1) {
+			fprintf(stderr, "WARN: click payload too large\n");
+		}
+		payload[payloadsize] = '\0';
 
 		int left_button = 1;
 		size_t wgt_idx = clicks_wgt_count;
 		size_t i = 0;
 		while (
-			i < CLICKS_PAYLOAD_MAX_SIZE &&
+			i < payloadsize &&
 			payload[i] != '\0' &&
 			wgt_idx == clicks_wgt_count &&
 			left_button == 1
 		) {
 			i = read_param_name(
-				payload, CLICKS_PAYLOAD_MAX_SIZE, i, buf, CLICKS_BUF_SIZE
+				payload, payloadsize, i, buf, CLICKS_BUF_SIZE
 			);
 
 			if (strcmp(buf, "name") == 0) {
 				i = read_param_val(
-					payload, CLICKS_PAYLOAD_MAX_SIZE, i, buf, CLICKS_BUF_SIZE
+					payload, payloadsize, i, buf, CLICKS_BUF_SIZE
 				);
 				wgt_idx = strtol(buf, NULL, 10);
 			} else if (strcmp(buf, "button") == 0) {
 				i = read_param_val(
-					payload, CLICKS_PAYLOAD_MAX_SIZE, i, buf, CLICKS_BUF_SIZE
+					payload, payloadsize, i, buf, CLICKS_BUF_SIZE
 				);
 				if (buf[0] != '1') {
 					left_button = 0;
 				}
 			} else {
-				i = skip_value(payload, CLICKS_PAYLOAD_MAX_SIZE, i);
+				i = skip_value(payload, payloadsize, i);
 			}
 		}
 
@@ -182,9 +206,4 @@ void clicks_start_thread(struct wgt** wgts, size_t wgt_count) {
 		fprintf(stderr, "FATAL: failed to spawn clicks thread\n");
 		exit(1);
 	}
-}
-
-void clicks_stop_thread(void) {
-	clicks_listening = 0;
-	thrd_join(clicks_thrd, NULL);
 }

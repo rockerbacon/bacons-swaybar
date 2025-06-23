@@ -20,7 +20,7 @@ $(BUILDDIR)/%.o: src/%.c src/%.h
 	mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILDDIR)/main: src/main.c $(BUILDDIR)/clicks.o $(BUILDDIR)/sway.o $(BUILDDIR)/sysfs.o $(WIDGET_OBJS)
+$(BUILDDIR)/main: src/main.c $(BUILDDIR)/clicks.o $(BUILDDIR)/sighandler.o $(BUILDDIR)/sway.o $(BUILDDIR)/sysfs.o $(WIDGET_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 install: $(BUILDDIR)/main

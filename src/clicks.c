@@ -10,7 +10,7 @@
 
 #define CLICKS_BUF_SIZE 32
 #define CLICKS_PAYLOAD_MAX_SIZE 128
-#define CLICKS_POLL_TIMEOUT 1000
+#define CLICKS_POLL_TIMEOUT 5000
 
 thrd_t clicks_thrd;
 

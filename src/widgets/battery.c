@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <sway.h>
 #include <sysfs.h>
 #include <widgets/battery.h>
 
+#define ICN_NO_BATT 0x1f50c
 #define ICN_BATT_HIG 0x1f50b
 #define ICN_BATT_LOW 0x1faab
 #define ICN_BATT_CHR 0x26a1
@@ -17,10 +19,14 @@
 
 #define BATT_UPD_SEC 13
 
+#define BATT_SFS_CAPACITY "/sys/class/power_supply/BAT0/capacity"
+#define BATT_SFS_AC_ON "/sys/class/power_supply/AC/online"
+
 struct sfs_param batt_ac_online;
 struct sfs_param batt_capacity;
-int batt_capacity_max;
 int batt_bar[] = {ICN_SQR_EMPTY, ICN_SQR_FULL};
+int batt_capacity_max;
+int batt_exists;
 
 void batt_destroy(void) {
 	sfs_param_destroy(&batt_ac_online);
@@ -28,6 +34,10 @@ void batt_destroy(void) {
 }
 
 int batt_display(char* buf, size_t bufsize) {
+	if (batt_exists == 0) {
+		return snprintf(buf, bufsize, "%lc", ICN_NO_BATT);
+	}
+
 	int charging = sfs_read_char(&batt_ac_online) == '1';
 	int capacity = sfs_read_int(&batt_capacity);
 	int main_icn;
@@ -56,12 +66,18 @@ void batt_init(void) {
 	} else {
 		batt_capacity_max = strtol(max_charge_str, NULL, 10);
 	}
-	sfs_param_init(
-		"/sys/class/power_supply/BAT0/capacity", &batt_capacity
-	);
-	sfs_param_init(
-		"/sys/class/power_supply/AC/online", &batt_ac_online
-	);
+
+	if (access(BATT_SFS_CAPACITY, F_OK) == 0) {
+		batt_exists = 1;
+		sfs_param_init(
+			BATT_SFS_CAPACITY, &batt_capacity
+		);
+		sfs_param_init(
+			BATT_SFS_AC_ON, &batt_ac_online
+		);
+	} else {
+		batt_exists = 0;
+	}
 }
 
 void batt_on_click(void) {
